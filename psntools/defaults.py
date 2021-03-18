@@ -37,7 +37,3 @@ from pkg_resources import resource_filename, Requirement
 # directory containing configuration files for plotting
 CONFIG_PLOT_DIR = \
     resource_filename(Requirement("psntools"), "psntools/config_plot")
-
-# default configuration file for the heatmap of the nodes
-CONFIG_PLOT_HEATMAP_NODES = \
-    os.path.join(CONFIG_PLOT_DIR, "heatmap_nodes.yaml")

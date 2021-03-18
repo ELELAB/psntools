@@ -30,262 +30,21 @@
 
 # third-party packages
 from matplotlib.backends.backend_pdf import PdfPages
-import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
 # psntools
-from .defaults import CONFIG_PLOT_HEATMAP_NODES
 from ._util import (
+    generate_colorbar,
+    generate_heatmap_annotations,
+    generate_mask_nancells,
+    generate_ticks_positions,
+    get_chunk_indexes,
     get_config_plot,
-    get_items
-    )
+    get_items,
+    set_axis)
 
-
-def generate_ticks_positions(values, config):
-    """Generate the positions that the ticks
-    will have on a plot axis/colorbar/etc.
-    """
-    
-    # get the configurations
-    inttype = config.get("type")
-    rtn = config.get("round_to_nearest")
-    top = config.get("top")
-    bottom = config.get("bottom")
-    steps = config.get("steps")
-    spacing = config.get("spacing")
-    ciz = config.get("center_in_zero")
-    
-    # if no rounding has been specified and the
-    # interval is continuous
-    if not rtn and inttype == "continuous":
-        # default to rounding to the nearest 0.5
-        rtn = 0.5
-
-    # if the maximum of the ticks interval has not
-    # been specified
-    if not top:
-        if inttype == "discrete":
-            # default top value is the maximum
-            # of the values provided
-            top = int(max(values))
-        elif inttype == "continuous":
-            # default top value is the rounded up 
-            # maximum of the values
-            top = np.ceil(max(values)*(1/rtn))/(1/rtn)
-
-    # if the minimum of the ticks interval has not
-    # been specified
-    if not bottom:
-        if inttype == "discrete":
-            # default bottom value is the minimum
-            # of the values provided
-            bottom = int(min(values))
-        elif inttype == "continuous":
-            # default bottom value is the rounded down 
-            # minimum of the values
-            bottom = np.floor(min(values)*(1/rtn))/(1/rtn)
-
-    # if the number of steps the interval should have
-    # has not been specified
-    if not steps:
-        if inttype == "discrete":
-            # default number of steps is lenght of
-            # the integer range between the bottom
-            # value and the top value
-            steps = len(list(range(bottom, top)))
-        elif inttype == "continuous":
-            # default is 5 steps
-            steps = 5
-
-    # if the interval spacing has not been specified
-    if not spacing:
-        if inttype == "discrete":
-            # default spacing is the one between two steps,
-            # rounded up
-            spacing = int(np.ceil(np.linspace(bottom, \
-                                              top, \
-                                              steps, \
-                                              retstep = True)[1]))
-        elif inttype == "continuous":
-            # default spacing is the one between two steps
-            spacing = np.linspace(bottom, \
-                                  top, \
-                                  steps, \
-                                  retstep = True)[1]
-
-    # if the two extremes of the interval coincide
-    if top == bottom:
-        # return only one value
-        return np.array([bottom])
-
-    # if the interval needs to be centered in zero
-    if ciz:
-        # get the highest absolute value
-        absval = np.ceil(top) if top > bottom \
-                 else np.floor(bottom)
-        # top and bottom will be opposite numbers with
-        # absolute value equal to absval
-        top, bottom = absval, -absval
-        # return an evenly spaced interval
-        # between top and bottom values
-        return np.linspace(bottom, top, steps)
-
-    # return the ticks interval
-    return np.arange(bottom, top + spacing, spacing)
-
-
-def generate_mask_nancells(ax, cells, config):
-    """Generate a mask to mark differently cells
-    in a heatmap containing NaN values.
-    """
-
-    # for each NaN cell
-    for y,x in cells:
-        # add a rectangulat patch over the cell
-        ax.add_patch(mpatches.Rectangle(xy = (x,y), **config))
-
-    # return the ax the patches have been plotted on
-    return ax
-
-
-def generate_heatmap_annotations(df, config):
-    """Generate the annotations to be plotted on 
-    a heatmap (each cell is annotated with the
-    corresponding value).
-    """
-
-    # if the configuration is empty
-    if config == dict():
-        # return a tuple filled with None values
-        return (None, None)
-
-    # get the configuration for the style of the annotations
-    # and for the number of decimals to be kept in the
-    # annotations
-    annot = config.get("annot")
-    ndecimals = config.get("ndecimals", 2)
-    # if no annotation is requested, leave the dictionary
-    # for the annotation properties empty
-    annotkws = {}
-
-    # if annotations are requested
-    if config.get("annot"):
-        # create a function to set the annotations 
-        # to the desired precision
-        annotfunc = lambda x : np.around(x, ndecimals) 
-        # vectorize the function
-        annottransform = np.vectorize(annotfunc)
-        # create annotations for all cells of the heatmap
-        annot = annottransform(df.values)
-        # get the style of the annotations
-        annotkws = config["style"]
-
-    # return annotations and style
-    return (annot, annotkws)
-
-
-def generate_colorbar(mappable, \
-                      ticks, \
-                      config):
-    """Generate a colorbar associated to a mappable
-    (for example, a heatmap).
-    """
- 
-    # plot the colorbar
-    cbar = plt.colorbar(mappable, **config["colorbar"])
-
-    # if there is an axis label (horizontal orientation)
-    if config["label"].get("xlabel"):
-        # set the colorbar label  
-        cbar.ax.set_xlabel(**config.get("label"))
-    # if there is an axis label (vertical orientation)
-    elif config["label"].get("ylabel"):
-        # set the colorbar label     
-        cbar.ax.set_ylabel(**config.get("label"))
-
-    # set the colorbar ticks and ticks labels
-    # setting ticks on cbar.ax raises a UserWarning, but setting
-    # tick labels does not
-    cbar.set_ticks(ticks)
-    cbar.ax.set_yticklabels(ticks, **config.get("ticklabels"))
-
-    # return the colorbar
-    return cbar
-
-
-def set_axis(ax, \
-             axis, \
-             config, \
-             ticks = None, \
-             ticklabels = None):
-    """Set up the x- or y-axis."""
-    
-    if ticks is None:
-        if axis == "x":
-            # default to the tick locations already present
-            ticks = plt.xticks()[0]
-        elif axis == "y":
-            # default to the tick locations already present
-            ticks = plt.yticks()[0]
-    
-    if ticklabels is None:
-        # default to the string representations
-        # of the ticks' locations
-        ticklabels = [str(t) for t in ticks]
-
-    # set the tick labels
-    ticklabelsconfig = {}
-    if config.get("ticklabels"):
-        ticklabelsconfig = config["ticklabels"]
-    
-    # if it is the x-axis
-    if axis == "x":    
-        # if there is an axis label
-        if config.get("label"):
-            # set the axis label
-            ax.set_xlabel(**config["label"])        
-        # set the ticks
-        ax.set_xticks(ticks = ticks)        
-        # set the tick labels
-        ax.set_xticklabels(labels = ticklabels, \
-                           **ticklabelsconfig)
-        if ticks != []:      
-            # set the axis boundaries
-            ax.spines["bottom"].set_bounds(ticks[0], \
-                                           ticks[-1])
-    
-    # if it is the y-axis
-    elif axis == "y":        
-        # if there is an axis label
-        if config.get("label"):
-            # set the axis label
-            ax.set_ylabel(**config["label"])        
-        # set the ticks
-        ax.set_yticks(ticks = ticks)        
-        # set the tick labels
-        ax.set_yticklabels(labels = ticklabels, \
-                           **ticklabelsconfig)
-        if ticks != []:       
-            # set the axis boundaries
-            ax.spines["left"].set_bounds(ticks[0], \
-                                         ticks[-1])
-
-    # if a configuration for the tick parameters was provided
-    if config.get("tick_params"):
-        # apply the configuration to the ticks
-        ax.tick_params(axis = axis, \
-                       **config["tick_params"])
-
-    # return the axis
-    return ax
-
-
-def get_chunk_indexes(df, n):
-    """Yield successive n-sized chunks from lst."""
-    for i in range(0, len(df), n):
-        yield (i,i + n)
 
 
 #--------------------------------- Plot ------------------------------#
@@ -294,22 +53,49 @@ def get_chunk_indexes(df, n):
 
 def plot_heatmap_nodes(df, \
                        outfile, \
+                       configfile, \
                        nodes_per_page = 20, \
-                       psn_labels = None, \
-                       configfile = CONFIG_PLOT_HEATMAP_NODES):
-    """Plot a heatmap with selected nodes on the x-axis and node
-    metrics of interest for such nodes on the y-axis.
+                       psn_labels = None):
+    """Plot a heatmap with selected nodes on the x-axis and the value
+    of a specific metric for different PSNs on the y-axis.
+
+    Parameters
+    ----------
+    outfile : `str`
+        Output PDF file.
+
+    configfile : `str`
+        Name of/path to the configuration file to be used for
+        plotting.
+
+    nodes_per_page : `int`, default: `20`
+        How many nodes to be plotted on each page.
+
+    psn_labels : `list` or `None`, default: `None`
+        List of custom labels to be used for the PSNs represented
+        in the dataframe. Labels must be passed in the same order
+        the PSNs appear in the dataframe.
+
+    Returns
+    -------
+    `None`
     """
 
+    # transpose the dataframe
     df = df.T
 
+    
     #------------------------- Configuration -------------------------#
 
 
+    # get the plot configuration
     config = get_config_plot(configfile = configfile)
     
+    # get the configuration for the output file
     config_out = config["output"]
     
+    # get the configurations for the heatmap, the colorbar, the cells
+    # with NaN values and the two axes
     config_heat, config_cbar, config_nan, \
     config_xaxis, config_yaxis = \
         get_items(config["plot"]["options"], \
@@ -317,12 +103,18 @@ def plot_heatmap_nodes(df, \
                         "xaxis", "yaxis"), \
                        {})
     
+    # get the configuration for plotting the cells of the heatmap
+    # and the annotations
     config_heatmap, config_annot = \
         get_items(config_heat, ("heatmap", "annot"), {})
     
+    # get the configuration for the interval to be represented on
+    # the colorbar
     config_int = \
         get_items(config_cbar, ("interval",), {})[0]
 
+
+    #----------------------- Colorbar settings -----------------------#
 
 
     # get the colorbar ticks positions
@@ -332,11 +124,15 @@ def plot_heatmap_nodes(df, \
     # get maximum and minimum value from the interval
     vmin, vmax = c_ticks[0], c_ticks[-1]
 
-
+    # open the multi-page PDF document
     with PdfPages(outfile) as pdf:
 
+        # get the indexes of the chunks of the dataframe containing
+        # exactly as many nodes as required by the user (data for
+        # each chunk will be plotted on different pages)
         chunk_ixs = get_chunk_indexes(df.T, nodes_per_page)
 
+        # for each chunk
         for start_ix, end_ix in chunk_ixs:
 
 
@@ -415,71 +211,3 @@ def plot_heatmap_nodes(df, \
             plt.clf()
             # close the current figure window
             plt.close()
-
-
-def plot_2Dmap_nodes(dfs, \
-                     x_metric, \
-                     y_metric, \
-                     hue_metric = None, 
-                     psn_labels = None, \
-                     selected_nodes = None):
-    """Generate a 2D plot where two different node metric
-    are plotted against each other to identify patterns or
-    correlation between them.
-
-    Parameters
-    ----------
-    dfs : `pandas.DataFrame`
-    """
-
-    #df = pd.DataFrame({"df1" : df1.values.flatten().tolist(), \
-    #                   "df2" : df2.values.flatten().tolist()})
-    
-    df = pd.DataFrame()
-
-    metrics = [x_metric, y_metric]
-    
-    if len(dfs) == 3:
-        hue = hue_metric
-        metrics += [hue_metric]
-
-    # clear the figure
-    plt.clf()
-    # close the current figure window
-    plt.close()
-
-    for i, psn_col in enumerate(dfs[0].columns):
-
-        dfs_to_concat = [d[psn_col] for d in dfs]
-
-        psn_df = pd.concat(dfs_to_concat, \
-                           axis = 1, \
-                           keys = metrics)
-
-        if selected_nodes is not None:
-            psn_df = psn_df.loc[selected_nodes,:]
-
-        ax = sns.scatterplot(data = psn_df, \
-                             x = x_metric, \
-                             y = y_metric, \
-                             hue = hue_metric)
-
-        psn_df["psn"] = psn_col
-
-        df = pd.concat([df, psn_df], axis = 0)
-
-        plt.savefig(f"{x_metric}_vs_{y_metric}_{psn_col}.pdf")
-
-        # clear the figure
-        plt.clf()
-        # close the current figure window
-        plt.close()
-
-
-def plot_node_metric_distribution(self, \
-                                  metric):
-
-    df = self.get_nodes_df(metrics = [metric])
-    sns.displot(df, x = metric)
-    plt.savefig("prova.pdf")
-
