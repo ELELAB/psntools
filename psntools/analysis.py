@@ -139,7 +139,7 @@ def get_nodes_df(data = None, \
         if not nv:
             # get the keyword arguments to be passed to the
             # function calculating the metric
-            metric_kws = metrics[m]
+            metric_kws = {**metrics[m], **{"node_fmt" : "residues"}}
             # calculate the metric for all nodes
             nv = psn.get_metric(metric = m, \
                                 kind = "node", \

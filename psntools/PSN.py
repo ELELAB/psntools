@@ -48,13 +48,9 @@ class PSN:
     """Class implementing a Protein Structure Network (PSN).
     """
 
-    # which format to use when representing nodes
-    # as formatted strings
-    NODE_STR_FMT = "{segid}-{resnum}{resname}"
 
-    # default segment identifier if no valid segment ID is provided
-    # in the topology
-    DEFAULT_SEGID = "SYSTEM"
+    ######################## PRIVATE ATTRIBUTES #######################
+
 
     # which attributes are by default associated to each node (they are
     # retrieved from the corresponding `MDAnalysis.core.groups.Residue`
@@ -63,29 +59,33 @@ class PSN:
 
     # which methods are allowed to modify the attributes of a PSN
     # instance after instantiation
-    _ALLOWED_TO_SET = {"select_edges", "select_nodes"}
-
+    _ALLOWED_TO_SET = {"select_edges", "select_nodes"}  
     
-    #----------------------------- Metrics ---------------------------#   
+    # metrics that have been implemented
+    _METRICS = \
+        {"node" : \
+            {"degree" : \
+                {"method" : "get_degree"}, \
+             "betweenness_centrality" : \
+                {"method" : "get_betweenness_centrality"}, \
+             "closeness_centrality" : \
+                {"method" : "get_closeness_centrality"}}, \
+         "edge" : {}, \
+         "graph" : {}, \
+         }
 
-    
-    # graph-wise metrics that have been implemented
-    _GRAPH_METRICS = {}
 
-    # node-wise metrics that have been implemented
-    _NODE_METRICS = \
-        {"degree" : \
-            {"method" : "get_degree", \
-             "kwargs" : {"node_fmt" : "residues"}}, \
-         "betweenness_centrality" : \
-            {"method" : "get_betweenness_centrality", \
-             "kwargs" : {"node_fmt" : "residues"}}, \
-         "closeness_centrality" : \
-            {"method" : "get_closeness_centrality", \
-             "kwargs" : {"node_fmt" : "residues"}}}
 
-    # edge-wise metrics that have been implemented
-    _EDGE_METRICS = {}
+    ######################## PUBLIC ATTRIBUTES ########################
+
+
+    # which format to use when representing nodes
+    # as formatted strings
+    NODE_STR_FMT = "{segid}-{resnum}{resname}"
+
+    # default segment identifier if no valid segment ID is provided
+    # in the topology
+    DEFAULT_SEGID = "SYSTEM"
 
     
     def __init__(self, \
@@ -100,7 +100,7 @@ class PSN:
             a file containing the adjacency matrix.
 
         universe: `MDAnalysis.Universe`
-            Universe representing the protein(s) the PSN was
+            Universe representing the system the PSN was
             calculated on.
 
         Attributes
@@ -204,8 +204,8 @@ class PSN:
 
     def _fmt_dict_of_nodes(self, d, node_fmt):
         """Format the nodes as either `MDAnalysis.core.groups.Residue`
-        instances of formatted strings in a dictionary having nodes
-        as keys and some property of their as values.
+        instances or strings in a dictionary having nodes
+        as keys and some property of theirs as values.
         """
 
         # if nodes should be Residue instances
@@ -215,12 +215,32 @@ class PSN:
         
         # if nodes should be strings
         elif node_fmt == "strings":
-            # get the mapping between Residue instances
-            # and formatted strings
+            # get the mapping between Residue instances and strings
             residues2strings = self.get_nodes_residues2strings()
-            # return the dictionary with nodes converted to 
-            # formatted strings
+            # return the dictionary with nodes converted to strings
             return {residues2strings[n] : v for n, v in d.items()}
+
+
+    def _fmt_dict_of_edges(self, d, node_fmt):
+        """Format the nodes forming the edges as either 
+        `MDAnalysis.core.groups.Residue` instances os
+        strings in a dictionary having nodes as keys
+        and some property of theirs as values.
+        """
+
+        # if nodes should be Residue instances
+        if node_fmt == "residues":
+            # just return the dictionary
+            return d
+        
+        # if nodes should be strings
+        elif node_fmt == "strings":
+            # get the mapping between Residue instances and strings
+            residues2strings = self.get_nodes_residues2strings()
+            # return the dictionary with nodes converted to strings
+            return \
+                {(residues2strings[u], residues2strings[v]) : w \
+                 for ((u, v), w) in d.items()}
 
 
 
@@ -230,11 +250,22 @@ class PSN:
 
     def get_nodes_attributes(self):
         """Return `MDAnalysis.core.groups.Residue`
-        attributes for each node."""
+        attributes for each node.
+
+        Parameters
+        ----------
+        `None`
+
+        Returns
+        -------
+        attrs : `list`
+            List of dictionaries, each dictionary containing the
+            attributes of each node.
+        """
 
         # initialize an empty list to store the attributes
-        # for each node
         attrs = []
+        
         # for each node
         for node in self.graph.nodes:
             # initialize an empty dictionary to store
@@ -261,6 +292,17 @@ class PSN:
     def get_nodes_residues2strings(self):
         """Return a mapping between `MDAnalysis.core.groups.Residue`
         instances and their string representations.
+
+        Parameters
+        ----------
+        `None`
+
+        Returns
+        -------
+        `dict`
+            Dictionary mapping `MDAnalysis.core.groups.Residue`
+            instances representing nodes to their string
+            representation.
         """
 
         # get the attributes for each node
@@ -271,9 +313,20 @@ class PSN:
 
 
     def get_nodes_strings2residues(self):
-        """Return a mapping between the formatted string
-        representations of nodes and and their corresponding
+        """Return a mapping between the string representations
+        of nodes and and their corresponding
         `MDAnalysis.core.groups.Residue` instances.
+
+        Parameters
+        ----------
+        `None`
+
+        Returns
+        -------
+        `dict`
+            Dictionary mapping string representations
+            of nodes to their corresponding
+            `MDAnalysis.core.groups.Residue` instances.
         """
         
         # get the attributes for each node
@@ -286,19 +339,25 @@ class PSN:
     def get_metric(self, metric, kind, metric_kws):
         """Compute a given metric for the entire graph, each
         node or each edge.
+
+        Parameters
+        ----------
+        metric : `str`
+            Metric to be computed.
+
+        kind : `str`, [`"graph"`, `"edge"`, `"node"`]
+            Type of metric.
+
+        metric_kws : `dict`
+            Keyword arguments to be passed to the method
+            computing the metric.
         """
 
-        if kind == "graph":
-            metrics = self._GRAPH_METRICS
-        elif kind == "node":
-            metrics = self._NODE_METRICS
-        elif kind == "edge":
-            metrics = self._EDGE_METRICS
+        # get the method that computes the metric
+        method = self._METRICS[kind][metric]["method"]
 
-        method, kwargs = \
-            metrics[metric]["method"], metrics[metric]["kwargs"]
-
-        return getattr(self, method)(**{**kwargs, **metric_kws})
+        # call the method with the provided keyword arguments
+        return getattr(self, method)(**metric_kws)
 
 
     def get_edges(self, \
@@ -332,22 +391,16 @@ class PSN:
 
         Returns
         -------
-        `dict`
-            Dictionary mapping each edge to its weight, if
-            the weight is higher than `min_weight`.
+        edges : `dict`
+            Dictionary mapping each edge to its weight.
         """
 
-        # if no minimum weight was set, set the minimum
-        # to minus infinite (no minimum)
+        # if no minimum weight was set, set the minimum to minus
+        # infinite (no minimum)
         min_weight = float(min_weight) if min_weight else float("-inf")
-        # if no maximum weight was set, set the maximum
-        # to infinite (no maximum)
+        # if no maximum weight was set, set the maximum to infinite
+        # (no maximum)
         max_weight = float(max_weight) if max_weight else float("inf")
-
-        # are residues are represented by Residue instances
-        # or formatted strings?
-        res_instances = \
-            True if isinstance(self.graph.nodes[0], Residue) else False
 
         # initialize the selected edges to all edges
         selected_edges = set(self.graph.edges)
@@ -386,31 +439,9 @@ class PSN:
                  in self.graph.edges(data = "weight") \
                  if (w >= min_weight and w <= max_weight) \
                  and (u, v) in selected_edges}
-        
-        # if nodes should be represented by Residue instances
-        if node_fmt == "residues":
-            # if they are not Residue insances already
-            if not res_instances:
-                # get the mapping between strings and Residue instances
-                strings2residues = self.get_nodes_strings2residues()
-                # modify the dictionary of edges
-                edges = \
-                    {(strings2residues[u], strings2residues[v]) : w \
-                     for ((u, v), w) in edges.items()}
 
-        # if nodes should be represented by strings
-        elif node_fmt == "strings":
-            # if they are not strings already
-            if res_instances:             
-                # get the mapping between Residue instances and strings
-                residues2strings = self.get_nodes_residues2strings()
-                # modify the dictionary of edges
-                edges = \
-                    {(residues2strings[u], residues2strings[v]) : w \
-                     for ((u, v), w) in edges.items()}
-
-        # return the dictionary of edges
-        return edges
+        # format the edges in the dictionary and return it
+        return self._fmt_dict_of_edges(d = edges, node_fmt = node_fmt)
 
 
 
@@ -453,8 +484,7 @@ class PSN:
         Parameters
         ----------
         min_degree : `int`, default: `3`
-            Minimum degree a node must have to be considered 
-            a hub.
+            Minimum degree a node must have to be considered a hub.
 
         max_degree : `int` or `None`, default: `None`
             Maximum degree for a hub to be reported.
@@ -483,14 +513,15 @@ class PSN:
         return self._fmt_dict_of_nodes(d = hubs, node_fmt = node_fmt)
 
 
-    def get_betweenness_centrality(self, node_fmt, **kwargs):
+    def get_betweenness_centrality(self, \
+                                   node_fmt, \
+                                   **kwargs):
         """Compute betweenness centrality for each node of the PSN.
         This function is a wrapper, tailored for PSNs, around 
         `networkx.algorithms.centrality.betweennes_centrality`.
 
         Parameters
         ----------
-
         node_fmt : `str` [`"residues"`, `"strings"`],
               default: `"residues"`
             Whether to represent nodes as 
@@ -515,7 +546,9 @@ class PSN:
                                        node_fmt = node_fmt)
 
 
-    def get_closeness_centrality(self, node_fmt, **kwargs):
+    def get_closeness_centrality(self, \
+                                 node_fmt, \
+                                 **kwargs):
         """Compute closeness centrality for each node of the PSN.
         This function is a wrapper, tailored for PSNs, around 
         `networkx.algorithms.centrality.closeness_centrality`.
@@ -625,16 +658,15 @@ class PSN:
     def get_shortest_paths(self, \
                            pairs, \
                            node_fmt = "residues"):
-        """Get all the shortest paths between given pairs of
-        nodes.
+        """Get all the shortest paths between given pairs of nodes
         
         Parameters
         ----------
         pairs : any iterable
-            Iterable of pairs of nodes represented as
-            formatted strings (each pair will be internally
-            converted to a tuple so be careful if you want the
-            nodes of the pair to be in a particular order).
+            Iterable of pairs of nodes represented as strings
+            (each pair will be internally converted to a tuple
+            so be careful if you want the nodes of the pair to
+            be in a particular order).
 
         node_fmt : `str` [`"residues"`, `"strings"`],
               default: `"residues"`
@@ -654,9 +686,11 @@ class PSN:
         # initialize an empty dictionary to store the
         # shortest paths
         all_sps = {}
+        
         # get a mapping between string representations
         # of nodes and Residue instances
         residues2strings = self.get_nodes_residues2strings()
+        
         # create a copy of the graph with relabeled nodes
         # (Residue instances can raise issues in calculating
         # shortest paths)
@@ -739,8 +773,8 @@ class PSN:
         ----------
         nodes : any iterable
             Iterable of strings formatted as specified in the
-            NODE_STR_FMT attribute, each identifying a node in the
-            PSN to be kept.
+            `NODE_STR_FMT` attribute, each identifying a node
+            in the PSN to be kept.
 
         Returns
         -------
