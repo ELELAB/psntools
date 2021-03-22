@@ -54,6 +54,7 @@ from ._util import (
 def plot_heatmap_nodes(df, \
                        outfile, \
                        configfile, \
+                       selected_nodes = None, \
                        nodes_per_page = 20, \
                        psn_labels = None):
     """Plot a heatmap with selected nodes on the x-axis and the value
@@ -67,6 +68,10 @@ def plot_heatmap_nodes(df, \
     configfile : `str`
         Name of/path to the configuration file to be used for
         plotting.
+
+    selected_nodes : `list`
+        Include only these nodes (must be be a list of the nodes'
+        string representations).
 
     nodes_per_page : `int`, default: `20`
         How many nodes to be plotted on each page.
@@ -126,6 +131,11 @@ def plot_heatmap_nodes(df, \
 
     # open the multi-page PDF document
     with PdfPages(outfile) as pdf:
+
+        # if only certain nodes need to be plotted
+        if selected_nodes is not None:
+            # select only the columns containg such nodes
+            df = df[selected_nodes]
 
         # get the indexes of the chunks of the dataframe containing
         # exactly as many nodes as required by the user (data for

@@ -106,7 +106,7 @@ plot:
         #   is 'horizontal'
         # - 'ylabel' if the orientation of the colorbar
         #   is 'vertical' 
-        xlabel: "Node degree"
+        xlabel: "Degree"
         # font properties
         fontproperties:
           # name of/path to the font
