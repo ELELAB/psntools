@@ -56,7 +56,8 @@ def plot_heatmap_nodes(df, \
                        configfile, \
                        selected_nodes = None, \
                        nodes_per_page = 20, \
-                       psn_labels = None):
+                       psn_labels = None, \
+                       node_labels = None):
     """Plot a heatmap with selected nodes on the x-axis and the value
     of a specific metric for different PSNs on the y-axis.
 
@@ -79,7 +80,12 @@ def plot_heatmap_nodes(df, \
     psn_labels : `list` or `None`, default: `None`
         List of custom labels to be used for the PSNs represented
         in the dataframe. Labels must be passed in the same order
-        the PSNs appear in the dataframe.
+        of the PSNs in the dataframe.
+
+    node_labels : `list` or `None`, default: `None`
+        List of custom labels to be used for the nodes represented
+        in the dataframe. Labels must be passed in the same order
+        of the nodes in the dataframe.
 
     Returns
     -------
@@ -124,7 +130,7 @@ def plot_heatmap_nodes(df, \
 
     # get the colorbar ticks positions
     c_ticks = generate_ticks_positions(values = df.values.flatten(), \
-                                       config = config_int)
+                                       config = config_int).tolist()
             
     # get maximum and minimum value from the interval
     vmin, vmax = c_ticks[0], c_ticks[-1]
@@ -153,7 +159,8 @@ def plot_heatmap_nodes(df, \
             sub_df = df.iloc[:,start_ix:end_ix]
 
             # x-axis tick labels will be the column names
-            xticklabels = sub_df.columns.values.tolist()
+            xticklabels = node_labels if node_labels is not None \
+                          else sub_df.columns.values.tolist()
             
             # y-axis tick labels will be the row names
             yticklabels = psn_labels if psn_labels is not None \
@@ -221,3 +228,127 @@ def plot_heatmap_nodes(df, \
             plt.clf()
             # close the current figure window
             plt.close()
+
+
+def plot_barplot_connected_components(df, \
+                                      outfile, \
+                                      configfile, \
+                                      n_ccs = 5, \
+                                      cc_prefix = "CC_", \
+                                      psn_labels = None):
+    """Plot a barplot with the distribution of nodes in the
+    most populated connected components.
+
+    Parameters
+    ----------
+    df : `pandas.DataFrame`
+        Dataframe containing the data.
+
+    outfile : `str`
+        Output PDF file.
+
+    configfile : `str`
+        Name of/path to the configuration file to be used for
+        plotting.
+
+    n_ccs : `int` or `None`, default: `5`
+        How many of the most populated connected components
+        should be plotted (components will be sorted by size
+        starting from the biggest one before plotting).
+
+    cc_prefix : `str`, default: `"CC_"`
+        Prefix to add to each connected component's name (if it
+        is an empty string, the components' names will be
+        integers).
+
+    psn_labels : `list` or `None`, default: `None`
+        List of custom labels to be used for the PSNs represented
+        in the dataframe. Labels must be passed in the same order
+        of the PSNs in the dataframe.
+
+    Returns
+    -------
+    `None`
+    """
+
+    #------------------------- Configuration -------------------------#
+
+
+    # get the plot configuration
+    config = get_config_plot(configfile = configfile)
+    
+    # get the configuration for the output file
+    config_out = config["output"]
+
+    # get the configurations for the barplot and the two axes
+    config_bar, config_xaxis, config_yaxis = \
+        get_items(config["plot"]["options"], \
+                       ("barplot", "xaxis", "yaxis"), \
+                       {})
+
+    # get the configuration of the interval represented on the y-axis
+    config_int = get_items(config_yaxis, ("interval",), {})[0]
+
+
+    #------------------------ Data processing ------------------------#
+
+
+    # get the mean size of the connected components over the PSNs
+    mean = df.mean(axis = 0)   
+    # get the standard deviation of the size of the connected
+    # components over the PSNs 
+    std = df.std(axis = 0)
+
+
+    #---------------------------- Plotting ---------------------------#
+
+
+    # clear the figure
+    plt.clf()
+    # close the current figure window
+    plt.close()
+
+    # get the y-axis ticks positions
+    y_ticks = generate_ticks_positions(values = df.values.flatten(), \
+                                       config = config_int).tolist()
+
+    # tick labels of the x-axis will be the PSN labels
+    xticklabels = psn_labels if psn_labels is not None else df.columns
+
+    # generate figure and axis
+    fig, ax = plt.subplots()
+
+    # generate the barplot
+    plt.bar(x = range(len(df.columns)), \
+            height = mean, \
+            yerr = std, \
+            **config_bar)
+
+    # detach a bit the x-axis from the bars.
+    # NB: IT NEEDS TO GO BEFORE THE X-AXIS SETTING BECAUSE OTHERWISE
+    # THE FONT PROPERTIES OF THE LABELS RESET TO THE DEFAULT
+    ax.spines["bottom"].set_position(("outward", 10))
+
+    # set the x-axis
+    set_axis(ax = ax, \
+             axis = "x", \
+             ticks = list(range(len(xticklabels))), \
+             ticklabels = xticklabels, \
+             config = config_xaxis)
+
+    # set the y-axis
+    set_axis(ax = ax, \
+             axis = "y", \
+             ticks = y_ticks, \
+             config = config_yaxis)
+
+    # hide top and right sping
+    for spine in ["top", "right"]:
+        ax.spines[spine].set_visible(False)
+
+    # save the plot
+    plt.savefig(outfile, **config_out)
+
+
+
+

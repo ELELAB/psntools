@@ -187,13 +187,13 @@ def generate_ticks_positions(values, config):
     
     # if no rounding has been specified and the
     # interval is continuous
-    if not rtn and inttype == "continuous":
+    if rtn is None and inttype == "continuous":
         # default to rounding to the nearest 0.5
         rtn = 0.5
 
     # if the maximum of the ticks interval has not
     # been specified
-    if not top:
+    if top is None:
         if inttype == "discrete":
             # default top value is the maximum
             # of the values provided
@@ -205,7 +205,7 @@ def generate_ticks_positions(values, config):
 
     # if the minimum of the ticks interval has not
     # been specified
-    if not bottom:
+    if bottom is None:
         if inttype == "discrete":
             # default bottom value is the minimum
             # of the values provided
@@ -217,7 +217,7 @@ def generate_ticks_positions(values, config):
 
     # if the number of steps the interval should have
     # has not been specified
-    if not steps:
+    if steps is None:
         if inttype == "discrete":
             # default number of steps is lenght of
             # the integer range between the bottom
@@ -228,7 +228,7 @@ def generate_ticks_positions(values, config):
             steps = 5
 
     # if the interval spacing has not been specified
-    if not spacing:
+    if spacing is None:
         if inttype == "discrete":
             # default spacing is the one between two steps,
             # rounded up
@@ -249,7 +249,7 @@ def generate_ticks_positions(values, config):
         return np.array([bottom])
 
     # if the interval needs to be centered in zero
-    if ciz:
+    if ciz is not None:
         # get the highest absolute value
         absval = np.ceil(top) if top > bottom \
                  else np.floor(bottom)
@@ -324,20 +324,40 @@ def generate_colorbar(mappable, \
     # plot the colorbar
     cbar = plt.colorbar(mappable, **config["colorbar"])
 
+    # get the colorbar orientation
+    orient = config["colorbar"].get("orientation") if \
+             config["colorbar"].get("orientation") is not None \
+             else "vertical"
+
     # if there is an axis label (horizontal orientation)
     if config["label"].get("xlabel"):
         # set the colorbar label  
         cbar.ax.set_xlabel(**config.get("label"))
+    
     # if there is an axis label (vertical orientation)
     elif config["label"].get("ylabel"):
         # set the colorbar label     
         cbar.ax.set_ylabel(**config.get("label"))
-
+    
     # set the colorbar ticks and ticks labels
-    # setting ticks on cbar.ax raises a UserWarning, but setting
-    # tick labels does not
+    # setting ticks on cbar.ax raises a UserWarning,
+    # but setting tick labels does not
     cbar.set_ticks(ticks)
-    cbar.ax.set_yticklabels(ticks, **config.get("ticklabels"))
+
+    # format the ticklabels (can behave weirdly if the position
+    # of a tick is represented by a number which has no precise
+    # binary representation)
+    ticklabels = [f"{float(np.round(t,2)):g}" for t in ticks]
+    
+    # if the orientation of the colorbar is horizontal
+    if orient == "horizontal":
+        # set the x-axis ticks
+        cbar.ax.set_xticklabels(ticklabels, **config.get("ticklabels"))
+
+    # if the orientation of the colorbar is vertical
+    elif orient == "vertical":
+        # set the y-axis ticks
+        cbar.ax.set_yticklabels(ticklabels, **config.get("ticklabels"))
 
     # return the colorbar
     return cbar

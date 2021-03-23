@@ -666,4 +666,4 @@ def write_nodes_df_psngroup(outfile, \
     # write the CSV file
     df.to_csv(outfile, \
               sep = csv_sep, \
-              float_format = float_fmt) 
+              float_format = float_fmt)

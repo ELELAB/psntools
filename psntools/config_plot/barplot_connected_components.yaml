@@ -1,0 +1,102 @@
+# Configuration file for plotting a bar plot with the average size of
+# the most populated connected components in a group of PSNs.
+
+
+# version of the configuration file
+version: 1
+
+
+#------------------------ OUTPUT FILE OPTIONS ------------------------#
+
+
+# output file settings (passed to 'matplotlib.pyplot.savefig')
+output:
+  # DPI (the higher the number, the higher the resolution)
+  dpi: 900
+  # whether to have a transparent or opaque background
+  transparent: True
+  # format of the output file
+  format: "pdf"
+  # bbox in inches. If 'tight', use tight layout for the figure
+  bbox_inches: "tight"
+
+
+#--------------------------- BARPLOT OPTIONS -------------------------#
+
+
+# plot settings
+plot:
+  
+
+  # plot options
+  options:
+
+    # options for the bar plot
+    barplot:
+
+      # colors for the bars
+      color: !!null
+      # keyword arguments to be passed to `matplotlib.pyplot.bar`
+      # for plotting error bars
+      error_kw:
+        # size of the cap
+        capsize: 10
+     
+
+    # x-axis settings  
+    xaxis:
+      # label settings (passed to 'matplotlib.axes.Axes.set_xlabel')
+      label:
+        # text of the label
+        xlabel: "Connected components"
+        # font properties
+        fontproperties:
+          # name of/path to the font
+          fname: !!null
+          # font size
+          size: 14
+      # tick labels settings (passed to 
+      # 'matplotlib.axes.Axes.set_xticklabels')  
+      ticklabels:
+        # tick label rotation
+        rotation: 90
+        # tick label font properties
+        fontproperties:
+          # name of/path to the font
+          fname: !!null
+          # font size
+          size: 8
+      
+    # y-axis settings
+    yaxis:
+      # label settings (passed to 'matplotlib.axes.Axes.set_ylabel')
+      label:
+        # text of the label
+        ylabel: "Number of nodes"
+        # tick label font properties
+        fontproperties:
+          # name of/path to the font
+          fname: !!null
+          # font size
+          size: 14
+      # tick labels settings 
+      # (passed to 'matplotlib.axes.Axes.set_yticklabels')
+      ticklabels:
+        # tick label rotation
+        rotation: 0
+        # tick label font properties
+        fontproperties:
+          # name of/path to the font
+          fname: !!null
+          # font size
+          size: 12
+      # interval of values to be represented on the y-axis
+      interval:
+        # interval type
+        type: discrete
+        # interval top value
+        top: !!null
+        # interval bottom value
+        bottom: !!null
+        # interval spacing
+        spacing: !!null

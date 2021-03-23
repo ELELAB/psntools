@@ -34,7 +34,7 @@ import networkx as nx
 
 
 
-############################### For PSNs ##############################
+################################ For PSN ##############################
 
 
 
@@ -157,7 +157,7 @@ def get_nodes_df(data = None, \
 
 
 
-############################ For PSN groups ###########################
+############################# For PSNGroup ############################
 
 
 
@@ -216,3 +216,59 @@ def get_nodes_df_psngroup(psngroup, \
 
     # return the dataframe
     return df
+
+
+def get_connected_components_df_psngroup(psngroup, \
+                                         n_ccs = 5, \
+                                         cc_prefix = "CC_"):
+    """Get a dataframe where, for a single node metric, values
+    for all nodes of the PSNs in the group are reported. Rows of
+    the dataframe represent nodes, while each column represents
+    a single PSN.
+
+    Parameters
+    ----------
+    psngroup : `psntools.PSN.PSNGroup`
+        PSN group.
+
+    n_ccs : `int` or `None`, default: `5`
+        How many of the most populated connected components
+        should be plotted (components will be sorted by size
+        starting from the biggest one before plotting).
+
+    cc_prefix : `str`, default: `"CC_"`
+        Prefix to add to each connected component's name (if it
+        is an empty string, the components' names will be
+        integers).
+
+    Returns
+    -------
+    df : `pandas.DataFrame`
+        Dataframe contaning the size of the most populated
+        connected components in the PSNs of the group.
+    """
+
+    # initialize an empty dictionary to store the data
+    data = {}
+    
+    # for each PSN in the group
+    for psn_label, psn in psngroup.psns.items():
+
+        # get connected components (already sorted by size with the
+        # biggest ones first)
+        ccs = sorted(psn.get_connected_components(), \
+                     key = lambda x : len(x), \
+                     reverse = True)[:n_ccs]
+
+        # add the data about the size of the most populated connected
+        # components in the current PSN
+        data[psn_label] = \
+            {f"{cc_prefix}{i+1}" : len(cc) for i, cc in enumerate(ccs)}
+
+    # convert the data into a dataframe
+    df = pd.DataFrame(data).T
+
+    # return the dataframe
+    return df
+
+
