@@ -22,3 +22,7 @@ The package contains several modules to perform various tasks related to PSN ana
 
 Both the user guide and unit tests for `psntools` are currently being written.
 
+## Reference
+Bcl-xL dynamics under the lens of protein structure networks. Valentina Sora, Dionisio Sanchez, Elena Papaleo*,J Phys Chem B, under revision
+an early pre-print version in biorxiv: doi: https://doi.org/10.1101/574699
+
