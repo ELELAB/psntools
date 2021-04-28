@@ -37,9 +37,9 @@ from . import analysis
 
 
 
-def write_psn_csv(psn, \
-                  outfile, \
-                  csv_sep = ",", \
+def write_psn_csv(psn,
+                  outfile,
+                  csv_sep = ",",
                   float_fmt = "%2.3f"):
     """Write a 2D `pandas.DataFrame` representation of the PSN
     to a CSV file. Rows and columns represent the nodes of the
@@ -98,10 +98,10 @@ def write_nodes_list(psn, outfile):
             out.write("\n")
 
 
-def write_nodes_csv(psn, \
-                    outfile, \
-                    metrics = None, \
-                    csv_sep = ",", \
+def write_nodes_csv(psn,
+                    outfile,
+                    metrics = None,
+                    csv_sep = ",",
                     float_fmt = "%2.3f"):
     """Write a CSV file with all nodes of a PSN. Rows of the
     dataframe will be the PSN nodes, identified by their string
@@ -138,24 +138,24 @@ def write_nodes_csv(psn, \
     """
 
     # get the nodes' dataframe
-    df = get_nodes_df(psn = psn, \
+    df = get_nodes_df(psn = psn,
                       metrics = metrics)
 
     # write out the dataframe as a CSV file
-    df.to_csv(outfile, \
-              sep = csv_sep, \
-              float_format = float_fmt, \
+    df.to_csv(outfile,
+              sep = csv_sep,
+              float_format = float_fmt,
               index = False)
 
     
-def write_edges_df(psn,\
-                   outfile, \
-                   metrics = None, \
-                   sort_by = "node", \
-                   ascending = False, \
-                   csv_sep = ",", \
-                   float_fmt = "%2.3f", \
-                   **kwargs):
+def write_edges_csv(psn,
+                    outfile,
+                    metrics = None,
+                    sort_by = "node",
+                    ascending = False,
+                    csv_sep = ",",
+                    float_fmt = "%2.3f",
+                    **kwargs):
     """Write a CSV file listing edges in the PSN.
 
     Parameters
@@ -198,7 +198,7 @@ def write_edges_df(psn,\
     edges = [(*k, v) for k, v in edges.items()]
     
     # generate a dataframe from the list
-    df = pd.DataFrame(edges, \
+    df = pd.DataFrame(edges,
                       columns = ["node1", "node2", "weight"])
         
     # if sorting by node was requested
@@ -221,22 +221,22 @@ def write_edges_df(psn,\
         ascending = [ascending, True, True]
 
     # sort the edges
-    df = df.sort_values(by = sort_cols, \
+    df = df.sort_values(by = sort_cols,
                         ascending = ascending)
         
     # write the dataframe to the output file
-    df.to_csv(outfile, \
-              sep = csv_sep, \
-              float_format = float_fmt, \
+    df.to_csv(outfile,
+              sep = csv_sep,
+              float_format = float_fmt,
               index = False)
 
 
-def write_hubs_csv(hubs = None, \
-                   psn = None, \
-                   outfile, \
-                   sort_by = "degree", \
-                   ascending = False, \
-                   csv_sep = ",", \
+def write_hubs_csv(hubs = None,
+                   psn = None,
+                   outfile,
+                   sort_by = "degree",
+                   ascending = False,
+                   csv_sep = ",",
                    **kwargs):
     """Write a CSV file with the hubs found in the PSN.
         
@@ -283,7 +283,7 @@ def write_hubs_csv(hubs = None, \
         
     # create a list containing hubs' segment IDs,
     # residue numbers, formatted strings and degrees
-    hubs = [(h.segid, h.resnum, residues2strings[h], d) \
+    hubs = [(h.segid, h.resnum, residues2strings[h], d)
              for h, d in hubs.items()]
         
     # generate a dataframe from the list
@@ -310,7 +310,7 @@ def write_hubs_csv(hubs = None, \
         ascending = [ascending, True, True]     
         
     # sort hubs
-    df = df.sort_values(by = sort_cols, \
+    df = df.sort_values(by = sort_cols,
                         ascending = ascending)
         
     # drop the first two columns (only used for sorting)
@@ -320,17 +320,17 @@ def write_hubs_csv(hubs = None, \
     df.columns = ["node", "value"]
         
     # write the dataframe to the output file
-    df.to_csv(outfile, \
-              sep = csv_sep, \
+    df.to_csv(outfile,
+              sep = csv_sep,
               index = False)
 
 
-def write_connected_components_csv(connected_components = None, \
-                                   psn = None, \
-                                   outfile, \
-                                   cc_prefix = "CC_", \
-                                   node_sep = ".", \
-                                   csv_sep = ",", \
+def write_connected_components_csv(connected_components = None,
+                                   psn = None,
+                                   outfile,
+                                   cc_prefix = "CC_",
+                                   node_sep = ".",
+                                   csv_sep = ",",
                                    **kwargs):
     """Write a CSV file with the list of connected components found.
 
@@ -369,12 +369,12 @@ def write_connected_components_csv(connected_components = None, \
     # if the connected components were not passed
     if connected_components is None:
         # get the connected components
-        ccs = psn.get_connected_components(node_fmt = "strings", \
+        ccs = psn.get_connected_components(node_fmt = "strings",
                                            **kwargs)
         
     # convert each connected component to a string. Start
     # numbering the connected components from 1.
-    ccs = {f"{cc_prefix}{i}" : node_sep.join(cc) \
+    ccs = {f"{cc_prefix}{i}" : node_sep.join(cc)
            for i, cc in enumerate(ccs, 1)}
         
     # generate a dataframe
@@ -384,20 +384,20 @@ def write_connected_components_csv(connected_components = None, \
     df.columns = ["cc", "nodes"]
         
     # write the dataframe to the output CSV file
-    df.to_csv(outfile, \
-              sep = csv_sep, \
+    df.to_csv(outfile,
+              sep = csv_sep,
               index = False)
 
 
-def write_shortest_paths_csvs(shortest_paths = None, \
-                              psn = None, \
-                              outfiles_prefix = "path_", \
-                              sort_by = ("length", "weight"), \
-                              ascending = (False, False), \
-                              pair_node_sep = "_", \
-                              path_node_sep = ".", \
-                              csv_sep = ",", \
-                              float_fmt = "%2.3f", \
+def write_shortest_paths_csvs(shortest_paths = None,
+                              psn = None,
+                              outfiles_prefix = "path_",
+                              sort_by = ("length", "weight"),
+                              ascending = (False, False),
+                              pair_node_sep = "_",
+                              path_node_sep = ".",
+                              csv_sep = ",",
+                              float_fmt = "%2.3f",
                               **kwargs):
     """For each pair of nodes, write a CSV file containing
     the shortest paths found between them. CSV files will
@@ -449,7 +449,7 @@ def write_shortest_paths_csvs(shortest_paths = None, \
     # if the shortest paths were not passed
     if shortest_paths is None:
         # get all the shortest paths
-        shortest_paths = psn.get_shortest_paths(node_fmt = "strings", \
+        shortest_paths = psn.get_shortest_paths(node_fmt = "strings",
                                                 **kwargs)
         
     # for each pair of nodes and associated shortest paths
@@ -462,7 +462,7 @@ def write_shortest_paths_csvs(shortest_paths = None, \
             
         # create a list with the paths as strings,
         # the length and the weight of each path
-        sps_str = [(path_node_sep.join(sp), len(sp), w) \
+        sps_str = [(path_node_sep.join(sp), len(sp), w)
                    for sp, w in sps.items()]
             
         # generate the dataframe containing the shortest paths
@@ -482,13 +482,13 @@ def write_shortest_paths_csvs(shortest_paths = None, \
             sort_cols = [df.columns[2], df.columns[1]]
             
         # sort the paths
-        df = df.sort_values(by = sort_cols, \
+        df = df.sort_values(by = sort_cols,
                             ascending = ascending)
             
         # write the dataframe to the output file
-        df.to_csv(outfile, \
-                  sep = csv_sep, \
-                  float_format = float_fmt, \
+        df.to_csv(outfile,
+                  sep = csv_sep,
+                  float_format = float_fmt,
                   index = False)
 
 
@@ -497,11 +497,11 @@ def write_shortest_paths_csvs(shortest_paths = None, \
 
 
 
-def write_common_hubs_csvs(common_hubs = None, \
-                           psngroup = None, \
-                           outfiles_prefix = "hubs_", \
-                           psn_sep = "_", \
-                           csv_sep = ",", \
+def write_common_hubs_csvs(common_hubs = None,
+                           psngroup = None,
+                           outfiles_prefix = "hubs_",
+                           psn_sep = "_",
+                           csv_sep = ",",
                            **kwargs):
     """Write the common hubs for each possible subset of PSNs
     in the PSNgroup to a CSV file.
@@ -551,13 +551,13 @@ def write_common_hubs_csvs(common_hubs = None, \
         df.to_csv(outfile, sep = csv_sep)
 
 
-def write_common_edges_csvs(common_edges = None, \
-                            psngroup = None, \
-                            outfiles_prefix = "edges_", \
-                            node_sep = "_", \
-                            psn_sep = "_", \
-                            csv_sep = ",", \
-                            float_fmt = "%2.3f", \
+def write_common_edges_csvs(common_edges = None,
+                            psngroup = None,
+                            outfiles_prefix = "edges_",
+                            node_sep = "_",
+                            psn_sep = "_",
+                            csv_sep = ",",
+                            float_fmt = "%2.3f",
                             **kwargs):
     """Write the common edges for each possible subset of PSNs
     in the PSNgroup to a CSV file.
@@ -605,7 +605,7 @@ def write_common_edges_csvs(common_edges = None, \
     for combo_label, combo in common_edges.items():
             
         # replace tuples representing edges with strings
-        combo = {p : {node_sep.join(e) : w for e,w in values.items()} \
+        combo = {p : {node_sep.join(e) : w for e,w in values.items()}
                  for p, values in combo.items()}
             
         # get the specific name of the file
@@ -617,16 +617,16 @@ def write_common_edges_csvs(common_edges = None, \
         df = pd.DataFrame.from_dict(combo, orient = "index")         
             
         # write the dataframe to the output file
-        df.to_csv(outfile, \
-                  sep = csv_sep, \
+        df.to_csv(outfile,
+                  sep = csv_sep,
                   float_format = float_fmt)
 
 
-def write_nodes_df_psngroup(outfile, \
-                            df = None, \
-                            psngroup = None, \
-                            metric = None, \
-                            csv_sep = ",", \
+def write_nodes_df_psngroup(outfile,
+                            df = None,
+                            psngroup = None,
+                            metric = None,
+                            csv_sep = ",",
                             float_fmt = "%2.3f"):
     """Write a CSV file where, for a single node metric, values
     for all nodes of the PSNs in the group are reported. Rows of
@@ -664,6 +664,6 @@ def write_nodes_df_psngroup(outfile, \
         df = get_nodes_df_psngroup(metric = metric)
 
     # write the CSV file
-    df.to_csv(outfile, \
-              sep = csv_sep, \
+    df.to_csv(outfile,
+              sep = csv_sep,
               float_format = float_fmt)
