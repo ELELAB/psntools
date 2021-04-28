@@ -231,9 +231,9 @@ def write_edges_csv(psn,
               index = False)
 
 
-def write_hubs_csv(hubs = None,
+def write_hubs_csv(outfile,
+                   hubs = None,
                    psn = None,
-                   outfile,
                    sort_by = "degree",
                    ascending = False,
                    csv_sep = ",",
@@ -242,14 +242,14 @@ def write_hubs_csv(hubs = None,
         
     Parameters
     ----------
+    outfile : `str`
+        Output file.
+
     hubs : `dict` or `None`, default: `None`
         Hubs, if already calculated.
 
     psn : `psntools.PSN.PSN` or `None`, default: `None`
         PSN.
-
-    outfile : `str`
-        Output file.
 
     sort_by : `str`, [`"degree"`, `"node"`], 
               default: `"degree"`
@@ -325,9 +325,9 @@ def write_hubs_csv(hubs = None,
               index = False)
 
 
-def write_connected_components_csv(connected_components = None,
+def write_connected_components_csv(outfile,
+                                   connected_components = None,
                                    psn = None,
-                                   outfile,
                                    cc_prefix = "CC_",
                                    node_sep = ".",
                                    csv_sep = ",",
@@ -336,14 +336,14 @@ def write_connected_components_csv(connected_components = None,
 
     Parameters
     ----------
+    outfile : `str`
+        Output file.
+
     connected_components : `dict` or `None`, default: `None`
         Connected components, if already calculated.
 
     psn : `psntools.PSN.PSN` or `None`, default: `None`
         PSN.
-
-    outfile : `str`
-        Output file.
 
     cc_prefix : `str`, default: `"CC_"`
         Prefix to add to each connected component's name (if it
@@ -636,7 +636,7 @@ def write_nodes_df_psngroup(outfile,
     Parameters
     ----------
     outfile : `str`
-        Output CSV file.
+        Output file.
 
     df : `pandas.DataFrame` or `None`, default: `None`
         Nodes' dataframe, if already created.
