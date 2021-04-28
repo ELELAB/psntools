@@ -622,12 +622,12 @@ def write_common_edges_csvs(common_edges = None,
                   float_format = float_fmt)
 
 
-def write_nodes_df_psngroup(outfile,
-                            df = None,
-                            psngroup = None,
-                            metric = None,
-                            csv_sep = ",",
-                            float_fmt = "%2.3f"):
+def write_nodes_csv_psngroup(outfile,
+                             df = None,
+                             psngroup = None,
+                             metric = None,
+                             csv_sep = ",",
+                             float_fmt = "%2.3f"):
     """Write a CSV file where, for a single node metric, values
     for all nodes of the PSNs in the group are reported. Rows of
     the dataframe represent nodes, while each column represents
