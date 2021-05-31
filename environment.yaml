@@ -21,7 +21,6 @@ dependencies:
     - numpy==1.20.3
     - pandas==1.1.5
     - Pillow==8.2.0
-    - psntools==0.1
     - pyparsing==2.4.7
     - python-dateutil==2.8.1
     - pytz==2021.1
