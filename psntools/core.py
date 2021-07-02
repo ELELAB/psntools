@@ -28,12 +28,11 @@
 
 
 
-# standard library
+# Standard library
 import inspect
 import itertools
 import logging
-
-# third-party packages
+# Third-party packages
 import numpy as np
 import MDAnalysis as mda
 from MDAnalysis.core.groups import Residue
@@ -52,26 +51,26 @@ class PSN:
     ######################## PRIVATE ATTRIBUTES #######################
 
 
-    # which attributes are by default associated to each node (they are
+    # Which attributes are by default associated to each node (they are
     # retrieved from the corresponding `MDAnalysis.core.groups.Residue`
     # instances, therefore they MUST be valid `Residue` attributes).
     _NODE_ATTRS = {"segid", "ix", "resnum", "resname"}
 
-    # which methods are allowed to modify the attributes of a PSN
+    # Which methods are allowed to modify the attributes of a PSN
     # instance after instantiation
     _ALLOWED_TO_SET = {"select_edges", "select_nodes"}  
     
-    # metrics that have been implemented
+    # Metrics that have been implemented
     _METRICS = \
         {"node" : \
             {"degree" : \
-                {"method" : "get_degree"}, \
-             "betweenness_centrality" : \
-                {"method" : "get_betweenness_centrality"}, \
+                {"method" : "get_degree"},
+             "betweenness_centrality" :
+                {"method" : "get_betweenness_centrality"},
              "closeness_centrality" : \
-                {"method" : "get_closeness_centrality"}}, \
-         "edge" : {}, \
-         "graph" : {}, \
+                {"method" : "get_closeness_centrality"}},
+         "edge" : {},
+         "graph" : {},
          }
 
 
@@ -79,11 +78,11 @@ class PSN:
     ######################## PUBLIC ATTRIBUTES ########################
 
 
-    # which format to use when representing nodes
-    # as formatted strings
+
+    # Which format to use when representing nodes as formatted strings
     NODE_STR_FMT = "{segid}-{resnum}{resname}"
 
-    # default segment identifier if no valid segment ID is provided
+    # Default segment identifier if no valid segment ID is provided
     # in the topology
     DEFAULT_SEGID = "SYSTEM"
 
@@ -121,39 +120,39 @@ class PSN:
 
 
 
-    # set the matrix attribute as a property
+    # Set the matrix attribute as a property
     @property
     def matrix(self):
         return self._matrix
-    # define the attibute setter
+    # Define the attibute setter
     @matrix.setter
     def matrix(self, value):
-        # who called the setter
+        # Who called the setter
         caller = inspect.stack()[1].function
-        # raise an error if a method which is not allowed to
+        # Raise an error if a method which is not allowed to
         # modify the attribute tries to do so
         if not caller in self._ALLOWED_TO_SET:
             raise AttributeError("'matrix' cannot be changed after " \
                                  "PSN initialization.")
-        # set the attribute
+        # Set the attribute
         self._matrix = value  
 
 
-    # set the graph attribute as a property
+    # Set the graph attribute as a property
     @property
     def graph(self):
         return self._graph
-    # define the attribute setter
+    # Define the attribute setter
     @graph.setter
     def graph(self, value):
-        # who called the setter
+        # Who called the setter
         caller = inspect.stack()[1].function
-        # raise an error if a method which is not allowed to
+        # Raise an error if a method which is not allowed to
         # modify the attribute tries to do so
         if not caller in self._ALLOWED_TO_SET:
             raise AttributeError("'graph' cannot be changed after " \
                                  "PSN initialization.")
-        # set the attribute
+        # Set the attribute
         self._graph = value 
     
 
@@ -162,27 +161,56 @@ class PSN:
 
 
 
+    def _get_residues_attributes(self, residues):
+        """Return `MDAnalysis.core.groups.Residue` attributes for
+        all residues.
+        """
+
+        # Initialize an empty dictionary to store the attributes
+        attrs = {res : {} for res in residues}
+        
+        # For each residue
+        for res in universe.residues:
+            # For each attribute
+            for a in self._NODE_ATTRS:
+                # Get its value
+                value = getattr(res, a)
+                # If the attribute is the segment ID
+                # and there is no segment ID
+                if a == "segid" and value == "":
+                    # Assign the default segment ID
+                    value = self.DEFAULT_SEGID
+                # Add the attribute to the dictionary
+                attrs[a][res] = value
+
+        # Return the dictionary of attributes
+        return attrs
+
+
     def _get_psn_matrix(self, matrix):
         """Load the matrix and ensure that it is is square 
         and symmetric and that it only has two dimensions.
         """
         
-        # if matrix is a string, interpret is as a file path
+        # If matrix is a string, interpret is as a file path
         if isinstance(matrix, str):
-            # load the matrix from the file
+            # Load the matrix from the file
             matrix = np.loadtxt(matrix)
 
-        # check the number of dimensions
+        # Check the number of dimensions
         if not len(matrix.shape) == 2:
             raise ValueError("The PSN matrix must be two-dimensional.")
-        # check that both dimensions of the matrix are of the
+        
+        # Check that both dimensions of the matrix are of the
         # same size
         if not matrix.shape[0] == matrix.shape[1]:
             raise ValueError("The PSN matrix must be square.")
-        # check that the matrix is symmetrix
+        
+        # Check that the matrix is symmetrix
         if not np.array_equal(matrix, matrix.T):
             raise ValueError("The PSN matrix must be symmetric.")
-        # return the matrix
+        
+        # Return the matrix
         return matrix
 
 
@@ -191,15 +219,28 @@ class PSN:
         `MDAnalysis.core.groups.Residue` instances).
         """
 
-        # create a graph from the matrix
-        graph = nx.from_numpy_matrix(self.matrix)        
-        # map the old node labels to the list of Residue instances
-        oldlabels2newlabels = dict(zip(graph.nodes, universe.residues))
-        # return the PSN graph with relabeled nodes
-        return nx.relabel_nodes(\
-                G = graph, \
-                mapping = oldlabels2newlabels, \
-                copy = True)
+        # Create a graph from the matrix
+        graph = nx.from_numpy_matrix(self.matrix)
+
+        # Get the residues
+        residues = universe.residues   
+        
+        # Map the old node labels to the list of Residue instances
+        oldlabels2newlabels = dict(zip(graph.nodes, residues))
+        
+        # Create the PSN graph with relabeled nodes
+        graph = nx.relabel_nodes(G = graph,
+                                 mapping = oldlabels2newlabels,
+                                 copy = True)
+
+        # For each residue attribute
+        for a, val in self._get_residues_attributes(residues).items():
+            # Add the attribute with the corresponding value to
+            # each node
+            nx.set_node_attributes(graph, val, a)
+
+        # Return the PSN graph
+        return graph
 
 
     def _fmt_dict_of_nodes(self, d, node_fmt):
@@ -248,47 +289,6 @@ class PSN:
 
 
 
-    def get_nodes_attributes(self):
-        """Return `MDAnalysis.core.groups.Residue`
-        attributes for each node.
-
-        Parameters
-        ----------
-        `None`
-
-        Returns
-        -------
-        attrs : `list`
-            List of dictionaries, each dictionary containing the
-            attributes of each node.
-        """
-
-        # initialize an empty list to store the attributes
-        attrs = []
-        
-        # for each node
-        for node in self.graph.nodes:
-            # initialize an empty dictionary to store
-            # the attributes of this node
-            attr_dict = {}
-            # for each attribute
-            for a in self._NODE_ATTRS:
-                # get its value
-                value = getattr(node, a)
-                # if the attribute is the segment ID
-                # and there is no segment ID
-                if a == "segid" and value == "":
-                    # assign the default segment ID
-                    value = self.DEFAULT_SEGID
-                # add the attribute to the dictionary
-                attr_dict[a] = value
-            # add the dictionary of attributes to the list
-            attrs.append(attr_dict)
-
-        # return the list of attributes for all nodes
-        return attrs
-
-
     def get_nodes_residues2strings(self):
         """Return a mapping between `MDAnalysis.core.groups.Residue`
         instances and their string representations.
@@ -305,9 +305,10 @@ class PSN:
             representation.
         """
 
-        # get the attributes for each node
-        attrs = self.get_nodes_attributes()
-        # generate the mapping
+        # Get the attributes for each node
+        attrs = self.graph.nodes.data()
+        
+        # Generate the mapping
         return {node: self.NODE_STR_FMT.format(**a) \
                 for node, a in zip(self.graph.nodes, attrs)}
 
@@ -329,9 +330,10 @@ class PSN:
             `MDAnalysis.core.groups.Residue` instances.
         """
         
-        # get the attributes for each node
-        attrs = self.get_nodes_attributes()
-        # generate the mapping
+        # Get the attributes for each node
+        attrs = self.graph.nodes.data()
+        
+        # Generate the mapping
         return {self.NODE_STR_FMT.format(**a) : node \
                 for node, a in zip(self.graph.nodes, attrs)}
 
@@ -353,17 +355,17 @@ class PSN:
             computing the metric.
         """
 
-        # get the method that computes the metric
+        # Get the method that computes the metric
         method = self._METRICS[kind][metric]["method"]
 
-        # call the method with the provided keyword arguments
+        # Call the method with the provided keyword arguments
         return getattr(self, method)(**metric_kws)
 
 
-    def get_edges(self, \
-                  min_weight = None, \
-                  max_weight = None, \
-                  mode = "all", \
+    def get_edges(self,
+                  min_weight = None,
+                  max_weight = None,
+                  mode = "all",
                   node_fmt = "residues"):
         """Get the edges of the PSN. You can define a minimum and
         maximum weight they must have to be reported and if only
@@ -395,52 +397,53 @@ class PSN:
             Dictionary mapping each edge to its weight.
         """
 
-        # if no minimum weight was set, set the minimum to minus
+        # If no minimum weight was set, set the minimum to minus
         # infinite (no minimum)
         min_weight = float(min_weight) if min_weight else float("-inf")
-        # if no maximum weight was set, set the maximum to infinite
+        
+        # If no maximum weight was set, set the maximum to infinite
         # (no maximum)
         max_weight = float(max_weight) if max_weight else float("inf")
 
-        # initialize the selected edges to all edges
+        # Initialize the selected edges to all edges
         selected_edges = set(self.graph.edges)
 
-        # if nodes are represented as Residue instances
+        # If nodes are represented as Residue instances
         if res_instances:
             
-            # if all edges should be kept
+            # If all edges should be kept
             if mode == "all":
-                # do nothing, all edges are already selected
+                # Do nothing, all edges are already selected
                 pass     
             
-            # if only edges between chains should be kept
+            # If only edges between chains should be kept
             elif mode == "interchain":
-                # keep edges if segid is different
+                # Keep edges if segid is different
                 selected_edges = \
                     set([(u, v) for (u, v, weight) \
                          in self.graph.edges(data = "weight") \
                          if u.segid != v.segid])           
             
-            # if only edges within single chains should be kept
+            # If only edges within single chains should be kept
             elif mode == "intrachain":
-                # keep edges if segid is the same
+                # Keep edges if segid is the same
                 selected_edges = \
                     set([(u, v) for (u, v, weight) \
                          in self.graph.edges(data = "weight") \
                          if u.segid == v.segid])
             
-            # if an unrecognized mode was passed
+            # If an unrecognized mode was passed
             else:
-                # raise an error
+                # Raise an error
                 raise ValueError(f"Unrecognized mode '{mode}.'")
 
-        # get the edges
+        # Get the edges
         edges = {(u, v) : w for (u, v, w) \
                  in self.graph.edges(data = "weight") \
                  if (w >= min_weight and w <= max_weight) \
                  and (u, v) in selected_edges}
 
-        # format the edges in the dictionary and return it
+        # Format the edges in the dictionary and return it
         return self._fmt_dict_of_edges(d = edges, node_fmt = node_fmt)
 
 
@@ -449,7 +452,7 @@ class PSN:
 
 
 
-    def get_degree(self, \
+    def get_degree(self,
                    node_fmt = "residues"):
         """Get the degree of all nodes in the PSN.
 
@@ -467,16 +470,16 @@ class PSN:
             Dictionary mapping each hub to its degree.
         """
 
-        # get the degree of all nodes
+        # Get the degree of all nodes
         degree = {n : self.graph.degree[n] for n in self.graph.nodes}
 
-        # format the nodes in the dictionary and return it 
+        # Format the nodes in the dictionary and return it 
         return self._fmt_dict_of_nodes(d = degree, node_fmt = node_fmt)
 
 
-    def get_hubs(self, \
-                 min_degree = 3, \
-                 max_degree = None, \
+    def get_hubs(self,
+                 min_degree = 3,
+                 max_degree = None,
                  node_fmt = "residues"):
         """Get the hubs of the PSN. A hub is defined as a node
         exceeding a certain degree `min_degree`.
@@ -501,20 +504,20 @@ class PSN:
             Dictionary mapping each hub to its degree.
         """
         
-        # if no maximum degree was set, set it to infinite
+        # If no maximum degree was set, set it to infinite
         max_degree = max_degree if max_degree else float("inf")
         
-        # get the hubs
+        # Get the hubs
         hubs = {n : v for n, v \
                 in self.get_degree(node_fmt = "residues") \
                 if (v >= min_degree and v <= max_degree)}
         
-        # format the nodes in the dictionary and return it  
+        # Format the nodes in the dictionary and return it  
         return self._fmt_dict_of_nodes(d = hubs, node_fmt = node_fmt)
 
 
-    def get_betweenness_centrality(self, \
-                                   node_fmt, \
+    def get_betweenness_centrality(self,
+                                   node_fmt,
                                    **kwargs):
         """Compute betweenness centrality for each node of the PSN.
         This function is a wrapper, tailored for PSNs, around 
@@ -538,16 +541,15 @@ class PSN:
             Dictionary mapping each node to its centrality value.
         """
 
-        # get the betweenness centrality
+        # Get the betweenness centrality
         c = nxcentr.betweenness_centrality(G = self.graph, **kwargs)
 
-        # format the nodes in the dictionary and return it
-        return self._fmt_dict_of_nodes(d = c, \
-                                       node_fmt = node_fmt)
+        # Format the nodes in the dictionary and return it
+        return self._fmt_dict_of_nodes(d = c, node_fmt = node_fmt)
 
 
-    def get_closeness_centrality(self, \
-                                 node_fmt, \
+    def get_closeness_centrality(self,
+                                 node_fmt,
                                  **kwargs):
         """Compute closeness centrality for each node of the PSN.
         This function is a wrapper, tailored for PSNs, around 
@@ -572,12 +574,11 @@ class PSN:
             Dictionary mapping each node to its centrality value.
         """
 
-        # get the closeness centrality
+        # Get the closeness centrality
         c = nxcentr.closeness_centrality(G = self.graph, **kwargs)
 
-        # format the nodes in the dictionary and return it
-        return self._fmt_dict_of_nodes(d = c, \
-                                       node_fmt = node_fmt)
+        # Format the nodes in the dictionary and return it
+        return self._fmt_dict_of_nodes(d = c, node_fmt = node_fmt)
 
 
 
@@ -585,10 +586,10 @@ class PSN:
 
 
 
-    def get_connected_components(self, \
-                                 min_size = None, \
-                                 max_size = None, \
-                                 ascending = False, \
+    def get_connected_components(self,
+                                 min_size = None,
+                                 max_size = None,
+                                 ascending = False,
                                  node_fmt = "residues"):
         """Get the connected components in the PSN.
 
@@ -620,32 +621,33 @@ class PSN:
             connected component.
         """
 
-        # default minimum size is 1
+        # Default minimum size is 1
         min_size = min_size if min_size else 1
-        # default maximum size is the number of nodes in the graph
+        
+        # Default maximum size is the number of nodes in the graph
         max_size = max_size if max_size else len(self.graph.nodes)
         
-        # get the connected components
-        ccs = sorted(nx.connected_components(G = self.graph), \
-                     key = len, \
+        # Get the connected components
+        ccs = sorted(nx.connected_components(G = self.graph),
+                     key = len,
                      reverse = not ascending)
         
-        # sets are usable for single connected components
+        # Sets are usable for single connected components
         # because each node is reported once and only once
         ccs = [set(cc) for cc in ccs \
                if (len(cc) >= min_size and len(cc) <= max_size)]
         
-        # if nodes should be Residue instances
+        # If nodes should be Residue instances
         if node_fmt == "residues":
-            # just return the connected components
+            # Just return the connected components
             return ccs
         
-        # if nodes should be strings
+        # If nodes should be strings
         elif node_fmt == "strings":
-            # get the mapping between Residue instances
+            # Get the mapping between Residue instances
             # and formatted strings
             residues2strings = self.get_nodes_residues2strings()
-            # return the connected components with nodes as strings
+            # Return the connected components with nodes as strings
             return [set([residues2strings[n] for n in cc]) \
                     for cc in ccs]
 
@@ -655,8 +657,8 @@ class PSN:
 
 
 
-    def get_shortest_paths(self, \
-                           pairs, \
+    def get_shortest_paths(self,
+                           pairs,
                            node_fmt = "residues"):
         """Get all the shortest paths between given pairs of nodes
         
@@ -683,80 +685,80 @@ class PSN:
             (sum of the weights of the edges in the path).
         """
         
-        # initialize an empty dictionary to store the
+        # Initialize an empty dictionary to store the
         # shortest paths
         all_sps = {}
         
-        # get a mapping between string representations
+        # Get a mapping between string representations
         # of nodes and Residue instances
         residues2strings = self.get_nodes_residues2strings()
         
-        # create a copy of the graph with relabeled nodes
+        # Create a copy of the graph with relabeled nodes
         # (Residue instances can raise issues in calculating
         # shortest paths)
-        graph = nx.relabel.relabel_nodes(G = self.graph, \
-                                         mapping = residues2strings, \
+        graph = nx.relabel.relabel_nodes(G = self.graph,
+                                         mapping = residues2strings,
                                          copy = True)
         
-        # for each pair of nodes
+        # For each pair of nodes
         for pair in [tuple(pair) for pair in pairs]:
 
-            # split the pair into source and target nodes
+            # Split the pair into source and target nodes
             source, target = pair
             
-            # check if their is a list one path between the
+            # Check if their is a list one path between the
             # two nodes of the pair
-            has_path = nx.has_path(G = graph, \
-                                   source = source, \
+            has_path = nx.has_path(G = graph,
+                                   source = source,
                                    target = target)
             
-            # inform the user that the pair has no paths
+            # Inform the user that the pair has no paths
             if not has_path:
                 logging.info(f"No paths found between " \
                              f"{source} and {target}.")
-                # go on to the next pair
+                # Go on to the next pair
                 continue
 
-            # get all the shortest paths
-            sps = nx.all_shortest_paths(G = graph, \
-                                        source = source, \
-                                        target = target, \
+            # Get all the shortest paths
+            sps = nx.all_shortest_paths(G = graph,
+                                        source = source,
+                                        target = target,
                                         weight = "weight")
 
-            # if nodes should be represented as Residue instances
+            # If nodes should be represented as Residue instances
             if node_fmt == "residues":
-                # get a mapping between Residue instances
+                # Get a mapping between Residue instances
                 # and string representations
                 strings2residues = self.get_nodes_strings2residues()
-                # get the Residue instance of the source node
+                # Get the Residue instance of the source node
                 source = strings2residues[source]
-                # get the Residue instance of the target node
+                # Get the Residue instance of the target node
                 target = strings2residues[target]
 
-            # add an empty dictionary to store the results
+            # Add an empty dictionary to store the results
             # of the current pair
             all_sps[(source,target)] = {}
             
-            # for each shortest path found
+            # For each shortest path found
             for sp in sps:
-                # get the edges forming the shortest path
+                # Get the edges forming the shortest path
                 path_edges = \
                     [(sp[i], sp[i+1]) for i in range(len(sp)-1)]
-                # sum the weight of the edges to get the weight
+                # Sum the weight of the edges to get the weight
                 # of the path
                 path_weight = \
                     np.sum([graph.edges[u,v]["weight"] \
                             for u,v in path_edges])
-                # if nodes should be represented as Residue
+                # If nodes should be represented as Residue
                 # instances
                 if node_fmt == "residues":
-                    # convert each node of the path
+                    # Convert each node of the path
                     sp = [strings2residues[n] for n in sp]
-                # add the path and its weight to the dictionary
+                # Add the path and its weight to the dictionary
                 # of paths found for the current pair
                 all_sps[(source,target)][tuple(sp)] = path_weight
 
-        # return all shortest paths
+        # Return all shortest paths
         return all_sps
 
 
@@ -781,23 +783,26 @@ class PSN:
         `None`
         """
         
-        # get a mapping of all formatted strings representing
+        # Get a mapping of all formatted strings representing
         # nodes to their corresponding Residue instances
         strings2residues = self.get_nodes_strings2residues()
-        # select the nodes of interest
+        
+        # Select the nodes of interest
         selected_nodes = [strings2residues[n] for n in nodes]
-        # it is necessary to create a copy() of the subgraph in order
+        
+        # It is necessary to create a copy() of the subgraph in order
         # to have a Graph object and not a simple view of the Graph
         self.graph = \
             self.graph.subgraph(nodes = selected_nodes).copy()
-        # update the matrix attribute
+        
+        # Update the matrix attribute
         self.matrix = \
             nx.convert_matrix.to_numpy_matrix(G = self.graph)
 
 
-    def select_edges(self, \
-                     min_weight = None, \
-                     max_weight = None, \
+    def select_edges(self,
+                     min_weight = None,
+                     max_weight = None,
                      mode = "all"):
         """Select edges in the PSN. The PSN will
         be modified in place.
@@ -815,17 +820,19 @@ class PSN:
         `None`
         """
         
-        # select the edges of interest
+        # Select the edges of interest
         selected_edges = \
-            self.get_edges(min_weight = min_weight, \
-                           max_weight = max_weight, \
-                           mode = mode, \
+            self.get_edges(min_weight = min_weight,
+                           max_weight = max_weight,
+                           mode = mode,
                            node_fmt = "residues").keys()
-        # it is necessary to create a copy() of the subgraph in order
+        
+        # It is necessary to create a copy() of the subgraph in order
         # to have a Graph object and not a simple view of the Graph
         self.graph = \
             self.graph.edge_subgraph(edges = selected_edges).copy()
-        # update the matrix attribute
+        
+        # Update the matrix attribute
         self.matrix = \
             nx.convert_matrix.to_numpy_matrix(G = self.graph)
 
@@ -837,10 +844,10 @@ class PSNGroup:
     """Class representing a group of PSNs.
     """
 
-    def __init__(self, \
-                 psns = None, \
-                 matrices = None, \
-                 universes = None, \
+    def __init__(self,
+                 psns = None,
+                 matrices = None,
+                 universes = None,
                  labels = None):
         """Initialize the PSNGroup.
 
@@ -871,23 +878,23 @@ class PSNGroup:
             corresponding `PSN` instance.
         """
         
-        # if an iterable of PSN objects was passed
+        # If an iterable of PSN objects was passed
         if psns:
-            # just convert the iterable to a list
+            # Just convert the iterable to a list
             psns = list(psns)
         
-        # if matrices and universes were passed
+        # If matrices and universes were passed
         else:
-            # create a list of PSN objects
+            # Create a list of PSN objects
             psns = [PSN(matrix = m, universe = u) \
                     for m, u in zip(matrices, universes)]
         
-        # if labels were not passed
+        # If labels were not passed
         if not labels:
-            # create a 0-based indexing
+            # Create a 0-based indexing
             labels = range(len(psns))
 
-        # create a dictionary mapping each label
+        # Create a dictionary mapping each label
         # to the corresponding PSN
         self.psns = dict(zip(labels, psns))
 
@@ -897,36 +904,36 @@ class PSNGroup:
 
 
 
-    def _get_common(self, \
+    def _get_common(self,
                     items_dict):
         """Generic method to get common items (hubs,
         edges, etc.) between different PSNs.
         """
         
-        # get all possible combinations of PSNs for which
+        # Get all possible combinations of PSNs for which
         # common items need to be retrieved
         combinations = \
             itertools.chain.from_iterable(\
                 [itertools.combinations(self.psns.keys(), i) \
                 for i in range(2, len(self.psns)+1)])       
         
-        # initialize an empty dictionary to store the results
+        # Initialize an empty dictionary to store the results
         results = {}
         
-        # for each PSN combination
+        # For each PSN combination
         for combo in combinations:
             
-            # create a set from the keys of each entry in the
+            # Create a set from the keys of each entry in the
             # items dictionary (keys are the items of interest,
             # values are associated values) for each PSN
             # in the current combination
             sets = [set(items_dict[i].keys()) for i in combo]
             
-            # find the intersection between the items of the
+            # Find the intersection between the items of the
             # PSNs in the current combination
             inters = set.intersection(*sets)
             
-            # store the results for the current combination as
+            # Store the results for the current combination as
             # a dictionary where the names of the PSNs in the
             # combination are associated to the dictionary of
             # items common to all PSNs in the combination, 
@@ -937,7 +944,7 @@ class PSNGroup:
                     {e : items_dict[psn_label][e] for e in inters} \
                  for psn_label in combo}
         
-        # return the results
+        # Return the results
         return results
 
 
@@ -950,8 +957,8 @@ class PSNGroup:
 
 
 
-    def get_common_hubs(self, \
-                        min_degree = 1, \
+    def get_common_hubs(self,
+                        min_degree = 1,
                         max_degree = None):
         """Get the common hubs for each possible subset of PSNs
         in the PSNgroup.
@@ -972,24 +979,24 @@ class PSNGroup:
             have in each PSN of the subset.
         """
 
-        # initialize an empty dictionary to store all
+        # Initialize an empty dictionary to store all
         # hubs found in the PSNs
         hubs_dict = {}
         
-        # for each PSN
+        # For each PSN
         for label, psn in self.psns.items():
-            # add the hubs in the PSN to the dictionary
-            hubs_dict[label] = psn.get_hubs(min_degree = min_degree, \
-                                            max_degree = max_degree, \
+            # Add the hubs in the PSN to the dictionary
+            hubs_dict[label] = psn.get_hubs(min_degree = min_degree,
+                                            max_degree = max_degree,
                                             node_fmt = "strings")
         
-        # return the common hubs for each subset of PSNs
+        # Return the common hubs for each subset of PSNs
         return self._get_common(items_dict = hubs_dict)
 
 
-    def get_common_edges(self, \
-                         min_weight = None, \
-                         max_weight = None, \
+    def get_common_edges(self,
+                         min_weight = None,
+                         max_weight = None,
                          mode = "all"):
         """Get the common edges for each possible subset of PSNs
         in the PSNgroup.
@@ -1012,17 +1019,18 @@ class PSNGroup:
             have in each PSN of the subset.
         """
 
-        # initialize an empty dictionary to store all
+        # Initialize an empty dictionary to store all
         # edges found in the PSNs
         edges_dict = {}
         
-        # for each PSN
+        # For each PSN
         for label, psn in self.psns.items():
-            # add the edges in the PSN to the dictionary
+            # Add the edges in the PSN to the dictionary
             edges_dict[label] = \
-                psn.get_edges(min_weight = min_weight, \
-                              max_weight = max_weight, \
-                              mode = mode, \
+                psn.get_edges(min_weight = min_weight,
+                              max_weight = max_weight,
+                              mode = mode,
                               node_fmt = "strings")
         
+        # Return the common edges for each subset of PSNs
         return self._get_common(items_dict = edges_dict)     

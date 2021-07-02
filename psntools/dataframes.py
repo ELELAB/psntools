@@ -28,7 +28,7 @@
 
 
 
-# third-party packages
+# Third-party packages
 import pandas as pd
 import networkx as nx
 
@@ -38,7 +38,7 @@ import networkx as nx
 
 
 
-def get_psn_df(psn, \
+def get_psn_df(psn,
                node_fmt = "residues"):
     """Get a 2D `pandas.DataFrame` representation of the PSN.
     Rows and columns represent the nodes of the PSN, and 
@@ -62,27 +62,27 @@ def get_psn_df(psn, \
         Output dataframe.
     """
         
-    # convert the graph to a Pandas adjacency matrix (= dataframe)
+    # Convert the graph to a Pandas adjacency matrix (= dataframe)
     df = nx.convert_matrix.to_pandas_adjacency(G = psn.graph)
         
-    # if nodes should be represented as Residue instances
+    # If nodes should be represented as Residue instances
     if node_fmt == "residues":
-        # simply return the dataframe
+        # Simply return the dataframe
         return df
         
-    # if nodes should be represented as strings
+    # If nodes should be represented as strings
     elif node_fmt == "strings":
-        # generate the labels for the PSN
+        # Generate the labels for the PSN
         df_labels = psn.get_nodes_residues2strings()
-        # set index and columns of the dataframe 
+        # Set index and columns of the dataframe 
         df = df.rename(mapper = df_labels, axis = 0)
         df = df.rename(mapper = df_labels, axis = 1)
-        # return the dataframe
+        # Return the dataframe
         return df
 
 
-def get_nodes_df(data = None, \
-                 psn = None, \
+def get_nodes_df(data = None,
+                 psn = None,
                  metrics = None):
     """Create a dataframe with nodes of a PSN and node metrics,
     if requested. The node metrics will be computed on the fly or a
@@ -112,47 +112,49 @@ def get_nodes_df(data = None, \
         Output dataframe.
     """
         
-    # get the node attributes
+    # Get the node attributes
     attrs = psn.get_nodes_attributes()
         
-    # build a dataframe from such attributes
+    # Build a dataframe from such attributes
     df = pd.DataFrame(attrs)
-    # set the index column as the column storing
+    
+    # Set the index column as the column storing
     # the residues' indexes
     df = df.set_index("ix", drop = True)
-    # insert a column with the name of the residue as
+    
+    # Insert a column with the name of the residue as
     # a formatted string
     df["formatted_string"] = \
         pd.Series({n["ix"] : psn.NODE_STR_FMT.format(**n) \
                   for n in attrs})      
 
-    # if no data were passed
+    # If no data were passed
     if not data:     
-        # convert it to a dictionary where each metric
+        # Convert it to a dictionary where each metric
         # maps to an empty dictionary
         data = {m : {} for m in metrics}
 
-    # for each metric, node values in the data dictionary
+    # For each metric, node values in the data dictionary
     for m, nv in data.items():      
-        # if there are not values associated to the metric
+        # If there are not values associated to the metric
         # (i.e. the metric needs to be computed)
         if not nv:
-            # get the keyword arguments to be passed to the
+            # Get the keyword arguments to be passed to the
             # function calculating the metric
             metric_kws = {**metrics[m], **{"node_fmt" : "residues"}}
-            # calculate the metric for all nodes
-            nv = psn.get_metric(metric = m, \
-                                kind = "node", \
+            # Calculate the metric for all nodes
+            nv = psn.get_metric(metric = m,
+                                kind = "node",
                                 metric_kws = metric_kws)
                 
-        # add it as a column to the dataframe
+        # Add it as a column to the dataframe
         df[m] = pd.Series({n.ix : v for n, v in nv.items()})
 
-    # set the index column as the column storing
+    # Set the index column as the column storing
     # the residues as formatted strings
     df = df.set_index("formatted_string", drop = True)
 
-    # return the dataframe
+    # Return the dataframe
     return df
 
 
@@ -161,7 +163,7 @@ def get_nodes_df(data = None, \
 
 
 
-def get_nodes_df_psngroup(psngroup, \
+def get_nodes_df_psngroup(psngroup,
                           metric = None):
     """Get a dataframe where, for a single node metric, values
     for all nodes of the PSNs in the group are reported. Rows of
@@ -185,41 +187,41 @@ def get_nodes_df_psngroup(psngroup, \
         nodes in all PSNs.
     """
 
-    # create a dictionary to store the value of the metric for
+    # Create a dictionary to store the value of the metric for
     # all PSNs in the group
     dfs = {}
 
-    # create a variable to store the node names in order,
+    # Create a variable to store the node names in order,
     # because Pandas reindex the dataframe when merging
     df_index = []
 
-    # for each PSN
+    # For each PSN
     for label, psn in psngroup.psns.items():
-        # get the nodes' dataframe for the single PSN
-        node_df = get_nodes_df(psn = psn, \
-                               metrics = metric)
-        # add the information about chain ID and residue
+        # Get the nodes' dataframe for the single PSN
+        node_df = get_nodes_df(psn = psn,
+                               metrics = [metric])
+        # Add the information about chain ID and residue
         # number for each node of the current PSN to the
         # dataframe that will be used for indexing
         df_index.append(node_df[["segid", "resnum"]])
-        # add the metric values for the nodes of the current
+        # Add the metric values for the nodes of the current
         # PSN to the dictionary that store all values for
         # all PSNs in the group
         metric_name = list(metric.keys())[0]
         dfs[label] = node_df[metric_name].squeeze()
         
-    # create the index to be used in the final dataframe
+    # Create the index to be used in the final dataframe
     index = pd.concat(df_index).drop_duplicates().index
 
-    # create the dataframe and reindex it
+    # Create the dataframe and reindex it
     df = pd.DataFrame(dfs).reindex(index)
 
-    # return the dataframe
+    # Return the dataframe
     return df
 
 
-def get_connected_components_df_psngroup(psngroup, \
-                                         n_ccs = 5, \
+def get_connected_components_df_psngroup(psngroup,
+                                         n_ccs = 5,
                                          cc_prefix = "CC_"):
     """Get a dataframe where, for a single node metric, values
     for all nodes of the PSNs in the group are reported. Rows of
@@ -248,27 +250,25 @@ def get_connected_components_df_psngroup(psngroup, \
         connected components in the PSNs of the group.
     """
 
-    # initialize an empty dictionary to store the data
+    # Initialize an empty dictionary to store the data
     data = {}
     
-    # for each PSN in the group
+    # For each PSN in the group
     for psn_label, psn in psngroup.psns.items():
 
-        # get connected components (already sorted by size with the
+        # Get connected components (already sorted by size with the
         # biggest ones first)
-        ccs = sorted(psn.get_connected_components(), \
-                     key = lambda x : len(x), \
+        ccs = sorted(psn.get_connected_components(),
+                     key = lambda x : len(x),
                      reverse = True)[:n_ccs]
 
-        # add the data about the size of the most populated connected
+        # Add the data about the size of the most populated connected
         # components in the current PSN
         data[psn_label] = \
             {f"{cc_prefix}{i+1}" : len(cc) for i, cc in enumerate(ccs)}
 
-    # convert the data into a dataframe
+    # Convert the data into a dataframe
     df = pd.DataFrame(data).T
 
-    # return the dataframe
+    # Return the dataframe
     return df
-
-

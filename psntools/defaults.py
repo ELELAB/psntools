@@ -29,11 +29,11 @@
 
 
 
-# standard library
+# Standard library
 import os
 from pkg_resources import resource_filename, Requirement
 
 
-# directory containing configuration files for plotting
+# Directory containing configuration files for plotting
 CONFIG_PLOT_DIR = \
     resource_filename(Requirement("psntools"), "psntools/config_plot")

@@ -27,10 +27,10 @@
 #    If not, see <http://www.gnu.org/licenses/>.
 
 
-# third-party packages
+# Third-party packages
 import pandas as pd
 # psntools
-from . import analysis
+from . import dataframes
 
 
 ############################### For PSNs ##############################
@@ -65,12 +65,12 @@ def write_psn_csv(psn,
     `None`
     """
         
-    # get the dataframe representing the PSN
-    df = analysis.get_psn_df(psn = psn, \
-                             node_fmt = "strings")
-    # write the dataframe to the output file
-    df.to_csv(outfile, \
-              sep = csv_sep, \
+    # Get the dataframe representing the PSN
+    df = dataframes.get_psn_df(psn = psn,
+                               node_fmt = "strings")
+    # Write the dataframe to the output file
+    df.to_csv(outfile,
+              sep = csv_sep,
               float_format = float_fmt)
 
 
@@ -91,9 +91,9 @@ def write_nodes_list(psn, outfile):
     """
 
     with open(outfile, "w") as out:
-        # for all node attributes
-        for attrs in psn.get_nodes_attributes():
-            # write out the nodes as formatted strings
+        # For all node attributes
+        for attrs in psn.graph.nodes.data():
+            # Write out the nodes as formatted strings
             out.write(psn.NODE_STR_FMT.format(**attrs))
             out.write("\n")
 
@@ -137,11 +137,11 @@ def write_nodes_csv(psn,
     `None`
     """
 
-    # get the nodes' dataframe
-    df = get_nodes_df(psn = psn,
-                      metrics = metrics)
+    # Get the nodes' dataframe
+    df = dataframes.get_nodes_df(psn = psn,
+                                 metrics = metrics)
 
-    # write out the dataframe as a CSV file
+    # Write out the dataframe as a CSV file
     df.to_csv(outfile,
               sep = csv_sep,
               float_format = float_fmt,
@@ -191,40 +191,40 @@ def write_edges_csv(psn,
     `None`
     """
 
-    # get the edges of the PSN
+    # Get the edges of the PSN
     edges = psn.get_edges(node_fmt = "strings", **kwargs)
         
-    # convert the dictionary to a list of flat tuples
+    # Convert the dictionary to a list of flat tuples
     edges = [(*k, v) for k, v in edges.items()]
     
-    # generate a dataframe from the list
+    # Generate a dataframe from the list
     df = pd.DataFrame(edges,
                       columns = ["node1", "node2", "weight"])
         
-    # if sorting by node was requested
+    # If sorting by node was requested
     if sort_by == "node":
-        # sorting columns are those containing the nodes
+        # Sorting columns are those containing the nodes
         sort_cols = [df.columns[0], df.columns[1]]
-        # the user's preference of sorting order will
+        # The user's preference of sorting order will
         # be applied to both columns
         ascending = [ascending] * 2
         
-    # if sorting by weight was requested
+    # If sorting by weight was requested
     elif sort_by == "weight":
-        # sorting columns are weight and then those
+        # Sorting columns are weight and then those
         # containing the nodes
         sort_cols = [df.columns[2], df.columns[0], df.columns[1]]
-        # the user's preference of sorting will
+        # The user's preference of sorting will
         # only be applied to the weight column, while
         # the secondary sorting on nodes will happen
         # in ascending lexicographic order
         ascending = [ascending, True, True]
 
-    # sort the edges
+    # Sort the edges
     df = df.sort_values(by = sort_cols,
                         ascending = ascending)
         
-    # write the dataframe to the output file
+    # Write the dataframe to the output file
     df.to_csv(outfile,
               sep = csv_sep,
               float_format = float_fmt,
@@ -272,54 +272,54 @@ def write_hubs_csv(outfile,
     `None`
     """
 
-    # if the hubs were not passed
+    # If the hubs were not passed
     if hubs is None:
-        # get the hubs
+        # Get the hubs
         hubs = psn.get_hubs(node_fmt = "residues", **kwargs)
         
-    # get the mapping between Residue instances
+    # Get the mapping between Residue instances
     # and formatted strings
     residues2strings = psn.get_nodes_residues2strings()
         
-    # create a list containing hubs' segment IDs,
+    # Create a list containing hubs' segment IDs,
     # residue numbers, formatted strings and degrees
     hubs = [(h.segid, h.resnum, residues2strings[h], d)
              for h, d in hubs.items()]
         
-    # generate a dataframe from the list
+    # Generate a dataframe from the list
     df = pd.DataFrame(hubs)
         
-    # if sorting by node name was requested
+    # If sorting by node name was requested
     if sort_by == "node":
-        # sorting columns will be segment ID and
+        # Sorting columns will be segment ID and
         # residue number
         sort_cols = [df.columns[0], df.columns[1]]
-        # both will respect the user's decision
+        # Both will respect the user's decision
         # about the sorting order
         ascending = [ascending] * 2
         
-    # if sorting by degree was requested
+    # If sorting by degree was requested
     elif sort_by == "degree":
-        # sorting columns will be primarily degree,
+        # Sorting columns will be primarily degree,
         # secondarily segment ID and residue number
         sort_cols = [df.columns[3], *df.columns[:2]]
-        # only sorting by degree will respect the
+        # Only sorting by degree will respect the
         # user's decision about sorting order, while
         # secondary sorting will always be in
         # ascending order
         ascending = [ascending, True, True]     
         
-    # sort hubs
+    # Sort hubs
     df = df.sort_values(by = sort_cols,
                         ascending = ascending)
         
-    # drop the first two columns (only used for sorting)
+    # Drop the first two columns (only used for sorting)
     df = df.drop(df.columns[:2], axis = 1)
         
-    # set the dataframe columns
+    # Set the dataframe columns
     df.columns = ["node", "value"]
         
-    # write the dataframe to the output file
+    # Write the dataframe to the output file
     df.to_csv(outfile,
               sep = csv_sep,
               index = False)
@@ -366,24 +366,24 @@ def write_connected_components_csv(outfile,
     `None`
     """
 
-    # if the connected components were not passed
+    # If the connected components were not passed
     if connected_components is None:
-        # get the connected components
+        # Get the connected components
         ccs = psn.get_connected_components(node_fmt = "strings",
                                            **kwargs)
         
-    # convert each connected component to a string. Start
+    # Convert each connected component to a string. Start
     # numbering the connected components from 1.
     ccs = {f"{cc_prefix}{i}" : node_sep.join(cc)
            for i, cc in enumerate(ccs, 1)}
         
-    # generate a dataframe
+    # Generate a dataframe
     df = pd.DataFrame.from_dict(ccs, orient = "index").reset_index()
         
-    # set the dataframe columns
+    # Set the dataframe columns
     df.columns = ["cc", "nodes"]
         
-    # write the dataframe to the output CSV file
+    # Write the dataframe to the output CSV file
     df.to_csv(outfile,
               sep = csv_sep,
               index = False)
@@ -446,46 +446,47 @@ def write_shortest_paths_csvs(shortest_paths = None,
     `None`
     """
 
-    # if the shortest paths were not passed
+    # If the shortest paths were not passed
     if shortest_paths is None:
-        # get all the shortest paths
+        # Set all the shortest paths
         shortest_paths = psn.get_shortest_paths(node_fmt = "strings",
                                                 **kwargs)
         
-    # for each pair of nodes and associated shortest paths
+    # For each pair of nodes and associated shortest paths
     for pair, sps in shortest_paths.items():
             
-        # set the file name
+        # Set the file name
         name = f"{pair[0]}{pair_node_sep}{pair[1]}"
-        # add prefix and extension to the file name
+        
+        # Add prefix and extension to the file name
         outfile = f"{outfiles_prefix}{name}.csv"
             
-        # create a list with the paths as strings,
+        # Create a list with the paths as strings,
         # the length and the weight of each path
         sps_str = [(path_node_sep.join(sp), len(sp), w)
                    for sp, w in sps.items()]
             
-        # generate the dataframe containing the shortest paths
+        # Generate the dataframe containing the shortest paths
         df = pd.DataFrame(sps_str)
             
-        # set the dataframe columns
+        # Set the dataframe columns
         df.columns = ["path", "length", "weight"]
             
-        # if sorting primarily by length and secondarily by weight
+        # If sorting primarily by length and secondarily by weight
         if sort_by == ("length", "weight"):
-            # get the sorting columns
+            # Get the sorting columns
             sort_cols = [df.columns[1], df.columns[2]]
             
-        # if sorting primarily by weight and secondarily by length
+        # If sorting primarily by weight and secondarily by length
         elif sort_by == ("weight", "length"):
-            # get the sorting columns
+            # Get the sorting columns
             sort_cols = [df.columns[2], df.columns[1]]
             
-        # sort the paths
+        # Sort the paths
         df = df.sort_values(by = sort_cols,
                             ascending = ascending)
             
-        # write the dataframe to the output file
+        # Write the dataframe to the output file
         df.to_csv(outfile,
                   sep = csv_sep,
                   float_format = float_fmt,
@@ -534,20 +535,20 @@ def write_common_hubs_csvs(common_hubs = None,
     `None`
     """
 
-    # if the common hubs were not passed
+    # If the common hubs were not passed
     if common_hubs is None:
-        # get the common hubs
+        # Get the common hubs
         common_hubs = psngroup.get_common_hubs(**kwargs)
 
-    # for each combination of PSNs
+    # For each combination of PSNs
     for combo_label, combo in common_hubs.items():
-        # get the specific name of the file
+        # Get the specific name of the file
         name = psn_sep.join(combo_label)
-        # add prefix and extension
+        # Add prefix and extension
         outfile = f"{outfiles_prefix}{name}.csv"
-        # generate the dataframe
+        # Generate the dataframe
         df = pd.DataFrame.from_dict(combo, orient = "index")
-        # write the dataframe to the output file
+        # Write the dataframe to the output file
         df.to_csv(outfile, sep = csv_sep)
 
 
@@ -596,27 +597,28 @@ def write_common_edges_csvs(common_edges = None,
     `None`
     """
 
-    # if the common edges were not passed
+    # If the common edges were not passed
     if common_edges is None:
-        # get the common edges
+        # Get the common edges
         common_edges = psngroup.get_common_edges(**kwargs)
 
-    # for each PSN combination
+    # For each PSN combination
     for combo_label, combo in common_edges.items():
             
-        # replace tuples representing edges with strings
+        # Replace tuples representing edges with strings
         combo = {p : {node_sep.join(e) : w for e,w in values.items()}
                  for p, values in combo.items()}
             
-        # get the specific name of the file
+        # Get the specific name of the file
         name = psn_sep.join(combo_label)    
-        # add prefix and extension
+        
+        # Add prefix and extension
         outfile = f"{outfiles_prefix}{name}.csv"     
             
-        # generate the dataframe
+        # Generate the dataframe
         df = pd.DataFrame.from_dict(combo, orient = "index")         
             
-        # write the dataframe to the output file
+        # Write the dataframe to the output file
         df.to_csv(outfile,
                   sep = csv_sep,
                   float_format = float_fmt)
@@ -658,12 +660,12 @@ def write_nodes_csv_psngroup(outfile,
     `None`
     """
 
-    # if the dataframe was not passed
+    # If the dataframe was not passed
     if df is None:
         # get the dataframe
-        df = get_nodes_df_psngroup(metric = metric)
+        df = dataframes.get_nodes_df_psngroup(metric = metric)
 
-    # write the CSV file
+    # Write the CSV file
     df.to_csv(outfile,
               sep = csv_sep,
               float_format = float_fmt)
