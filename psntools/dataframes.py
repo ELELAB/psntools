@@ -31,6 +31,8 @@
 # Third-party packages
 import pandas as pd
 import networkx as nx
+# psntools
+from psntools import core
 
 
 
@@ -209,12 +211,16 @@ def get_nodes_df_psngroup(psngroup,
         # all PSNs in the group
         metric_name = list(metric.keys())[0]
         dfs[label] = node_df[metric_name].squeeze()
-        
+       
     # Create the index to be used in the final dataframe
-    index = pd.concat(df_index).drop_duplicates().index
+    #index = pd.concat(df_index).drop_duplicates().index
 
     # Create the dataframe and reindex it
-    df = pd.DataFrame(dfs).reindex(index)
+    #df = pd.DataFrame(dfs).reindex(index)
+    df = pd.DataFrame(dfs)
+
+    # Rename the index column
+    df.index.name = "residues"
 
     # Return the dataframe
     return df
