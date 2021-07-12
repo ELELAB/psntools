@@ -663,7 +663,8 @@ def write_nodes_csv_psngroup(outfile,
     # If the dataframe was not passed
     if df is None:
         # get the dataframe
-        df = dataframes.get_nodes_df_psngroup(metric = metric)
+        df = dataframes.get_nodes_df_psngroup(psngroup = psngroup,
+                                              metric = metric)
 
     # Write the CSV file
     df.to_csv(outfile,

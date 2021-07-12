@@ -113,7 +113,7 @@ def get_nodes_df(data = None,
     """
         
     # Get the node attributes
-    attrs = psn.get_nodes_attributes()
+    nodes, attrs = zip(*psn.graph.nodes.data())
         
     # Build a dataframe from such attributes
     df = pd.DataFrame(attrs)
@@ -132,7 +132,7 @@ def get_nodes_df(data = None,
     if not data:     
         # Convert it to a dictionary where each metric
         # maps to an empty dictionary
-        data = {m : {} for m in metrics}
+        data = {m : {} for m in metrics.keys()}
 
     # For each metric, node values in the data dictionary
     for m, nv in data.items():      
@@ -199,7 +199,7 @@ def get_nodes_df_psngroup(psngroup,
     for label, psn in psngroup.psns.items():
         # Get the nodes' dataframe for the single PSN
         node_df = get_nodes_df(psn = psn,
-                               metrics = [metric])
+                               metrics = metric)
         # Add the information about chain ID and residue
         # number for each node of the current PSN to the
         # dataframe that will be used for indexing

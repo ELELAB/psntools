@@ -167,10 +167,10 @@ class PSN:
         """
 
         # Initialize an empty dictionary to store the attributes
-        attrs = {res : {} for res in residues}
+        attrs = {a : {} for a in self._NODE_ATTRS}
         
         # For each residue
-        for res in universe.residues:
+        for res in residues:
             # For each attribute
             for a in self._NODE_ATTRS:
                 # Get its value
@@ -304,13 +304,10 @@ class PSN:
             instances representing nodes to their string
             representation.
         """
-
-        # Get the attributes for each node
-        attrs = self.graph.nodes.data()
         
         # Generate the mapping
-        return {node: self.NODE_STR_FMT.format(**a) \
-                for node, a in zip(self.graph.nodes, attrs)}
+        return {node: self.NODE_STR_FMT.format(**data) \
+                for node, data in self.graph.nodes.data()}
 
 
     def get_nodes_strings2residues(self):
@@ -409,7 +406,7 @@ class PSN:
         selected_edges = set(self.graph.edges)
 
         # If nodes are represented as Residue instances
-        if res_instances:
+        if node_fmt == "residues":
             
             # If all edges should be kept
             if mode == "all":
