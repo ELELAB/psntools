@@ -64,11 +64,14 @@ class PSN:
     _METRICS = \
         {"node" : \
             {"degree" : \
-                {"method" : "get_degree"},
+                {"method" : "get_degree", 
+                 "datatype" : int},
              "betweenness_centrality" :
-                {"method" : "get_betweenness_centrality"},
+                {"method" : "get_betweenness_centrality",
+                 "datatype" : float},
              "closeness_centrality" : \
-                {"method" : "get_closeness_centrality"}},
+                {"method" : "get_closeness_centrality",
+                 "datatype" : float}},
          "edge" : {},
          "graph" : {},
          }
@@ -355,8 +358,14 @@ class PSN:
         # Get the method that computes the metric
         method = self._METRICS[kind][metric]["method"]
 
+        datatype = self._METRICS[kind][metric]["datatype"]
+
         # Call the method with the provided keyword arguments
-        return getattr(self, method)(**metric_kws)
+        result = getattr(self, method)(**metric_kws)
+
+        # Return the dictionary with the results, converting
+        # the metric values to the correct data type
+        return {k : datatype(v) for k, v in result.items()}
 
 
     def get_edges(self,
