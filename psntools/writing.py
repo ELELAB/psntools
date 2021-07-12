@@ -192,10 +192,15 @@ def write_edges_csv(psn,
     """
 
     # Get the edges of the PSN
-    edges = psn.get_edges(node_fmt = "strings", **kwargs)
+    edges = psn.get_edges(node_fmt = "residues", **kwargs)
+
+    # Get the mapping between residues and formatted strings
+    res2str = psn.get_nodes_residues2strings()
         
     # Convert the dictionary to a list of flat tuples
-    edges = [(*k, v) for k, v in edges.items()]
+    edges = \
+        [(res2str[n1], res2str[n2], v)
+         for (n1, n2), v in edges.items()]
     
     # Generate a dataframe from the list
     df = pd.DataFrame(edges,

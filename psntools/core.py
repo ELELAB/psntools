@@ -412,29 +412,31 @@ class PSN:
         max_weight = float(max_weight) if max_weight else float("inf")
 
         # Initialize the selected edges to all edges
-        selected_edges = set(self.graph.edges)
+        selected_edges = set(self.graph.edges(data = "weight"))
 
         # If nodes are represented as Residue instances
         if node_fmt == "residues":
             
             # If all edges should be kept
             if mode == "all":
-                # Do nothing, all edges are already selected
-                pass     
+                # Select all edges
+                selected_edges = \
+                    set([(u, v, w) for (u, v, w) \
+                         in self.graph.edges(data = "weight")])  
             
             # If only edges between chains should be kept
             elif mode == "interchain":
                 # Keep edges if segid is different
                 selected_edges = \
-                    set([(u, v) for (u, v, weight) \
+                    set([(u, v, w) for (u, v, w) \
                          in self.graph.edges(data = "weight") \
-                         if u.segid != v.segid])           
+                         if u.segid != v.segid])          
             
             # If only edges within single chains should be kept
             elif mode == "intrachain":
                 # Keep edges if segid is the same
                 selected_edges = \
-                    set([(u, v) for (u, v, weight) \
+                    set([(u, v, w) for (u, v, w) \
                          in self.graph.edges(data = "weight") \
                          if u.segid == v.segid])
             
@@ -444,10 +446,8 @@ class PSN:
                 raise ValueError(f"Unrecognized mode '{mode}.'")
 
         # Get the edges
-        edges = {(u, v) : w for (u, v, w) \
-                 in self.graph.edges(data = "weight") \
-                 if (w >= min_weight and w <= max_weight) \
-                 and (u, v) in selected_edges}
+        edges = {(u, v) : w for (u, v, w) in selected_edges \
+                 if (w >= min_weight and w <= max_weight)}
 
         # Format the edges in the dictionary and return it
         return self._fmt_dict_of_edges(d = edges, node_fmt = node_fmt)
