@@ -32,6 +32,7 @@
 import inspect
 import itertools
 import logging
+import math
 # Third-party packages
 import numpy as np
 import MDAnalysis as mda
@@ -39,6 +40,7 @@ from MDAnalysis.core.groups import Residue
 import pandas as pd
 import networkx as nx
 import networkx.algorithms.centrality as nxcentr
+from networkx.algorithms.operators.binary import intersection as nxi
 
 
 
@@ -90,8 +92,8 @@ class PSN:
     DEFAULT_SEGID = "SYSTEM"
 
     
-    def __init__(self, \
-                 matrix, \
+    def __init__(self,
+                 matrix,
                  universe):
         """Initialize a PSN instance.
 
@@ -330,12 +332,9 @@ class PSN:
             `MDAnalysis.core.groups.Residue` instances.
         """
         
-        # Get the attributes for each node
-        attrs = self.graph.nodes.data()
-        
         # Generate the mapping
-        return {self.NODE_STR_FMT.format(**a) : node \
-                for node, a in zip(self.graph.nodes, attrs)}
+        return {self.NODE_STR_FMT.format(**data) : node \
+                for node, data in self.graph.nodes.data()}
 
 
     def get_metric(self, metric, kind, metric_kws):
@@ -515,7 +514,7 @@ class PSN:
         
         # Get the hubs
         hubs = {n : v for n, v \
-                in self.get_degree(node_fmt = "residues") \
+                in self.get_degree(node_fmt = "residues").items() \
                 if (v >= min_degree and v <= max_degree)}
         
         # Format the nodes in the dictionary and return it  
@@ -851,6 +850,7 @@ class PSNGroup:
     """
 
     def __init__(self,
+                 mappings,
                  psns = None,
                  matrices = None,
                  universes = None,
@@ -859,6 +859,13 @@ class PSNGroup:
 
         Parameters
         ----------
+        mappings : `str`
+            CSV file containing the mappings between
+            all nodes of the PSNs in the group (rows
+            represent distinct nodes, while columns
+            represent the PSNs and are named consistently
+            with the PSNs' labels).
+
         psns : any iterable of `PSN` instances or `None`,
                default: `None`
             Iterable of `PSN` instances.
@@ -882,8 +889,71 @@ class PSNGroup:
         psns : `dict`
             Dictionary mapping each PSN label to the
             corresponding `PSN` instance.
+
+        mappings : `str`
+            CSV file containing the mappings between
+            all nodes of the PSNs in the group (rows
+            represent distinct nodes, while columns
+            represent the PSNs and are named consistently
+            with the PSNs' labels).
         """
-        
+
+        # Set the PSNs belonging to the PSN group
+        self._psns = self._get_psns(psns = psns,
+                                    universes = universes,
+                                    matrices = matrices,
+                                    labels = labels)
+
+        # Set the mappings
+        self._mappings = \
+            self._get_psngroup_mappings(mappings = mappings)
+
+
+
+    ########################### PROPERTIES ############################
+
+
+
+    # Set the PSNs as a property of the PSN group
+    @property
+    def psns(self):
+        return self._psns
+    # Define the attibute setter
+    @psns.setter
+    def psns(self, value):
+        # Raise an error if a method tries to set it
+        raise AttributeError(\
+            "'psns' cannot be changed after " \
+            "PSNGroup initialization.")
+        # Set the attribute
+        self._psns = value  
+
+    # Set the mappings as a property of the PSN group
+    @property
+    def mappings(self):
+        return self._mappings
+    # Define the attibute setter
+    @mappings.setter
+    def mappings(self, value):
+        # Raise an error if a method tries to set it
+        raise AttributeError(\
+            "'mappings' cannot be changed after " \
+            "PSNGroup initialization.")
+        # Set the attribute
+        self._mappings = value  
+
+
+
+    ######################### PRIVATE METHODS #########################
+
+
+
+    def _get_psns(self,
+                  psns,
+                  universes,
+                  matrices,
+                  labels):
+
         # If an iterable of PSN objects was passed
         if psns:
             # Just convert the iterable to a list
@@ -902,16 +972,56 @@ class PSNGroup:
 
         # Create a dictionary mapping each label
         # to the corresponding PSN
-        self.psns = dict(zip(labels, psns))
+        return dict(zip(labels, psns))
 
 
+    def _get_psngroup_mappings(self,
+                               mappings):
+        """Load the mappings between the nodes of the
+        different nodes.
+        """
 
-    ######################### PRIVATE METHODS #########################
+        # Load the dataframe containing the mappings
+        df = pd.read_csv(mappings, index_col = 0)
 
+        # For each PSN, get the mapping between the Residue
+        # instances and their string representations
+        strings2residues = \
+            {psn_l : psn.get_nodes_strings2residues() \
+             for psn_l, psn in self.psns.items()}
+
+        # Get the mapping of each integer to all corresponding
+        # nodes in the PSNs
+        node_keys_strings = df.to_dict(orient = "index")
+        node_keys_residues = {}
+        for node, psn_ls in node_keys_strings.items():
+            node_keys_residues[node] = \
+                {psn_l : strings2residues[psn_l][s] \
+                 for psn_l, s in psn_ls.items() \
+                 if not isinstance(s, float)}
+
+        # Get the mapping of all nodes of each PSN to the
+        # corresponding integer representations
+        psn_keys_strings = {}
+        psn_keys_residues = {}
+        for psn_l, nodes in df.to_dict(orient = "dict").items():
+            psn_keys_strings[psn_l] = \
+                {s : i for i, s in nodes.items() \
+                 if not isinstance(s, float)}
+            psn_keys_residues[psn_l] = \
+                {strings2residues[psn_l][s] : i \
+                 for i, s in nodes.items() \
+                 if not isinstance(s, float)}
+
+        # Return all mappings
+        return {"residues" : (node_keys_residues, psn_keys_residues),
+                "strings" : (node_keys_strings, psn_keys_strings)}
 
 
     def _get_common(self,
-                    items_dict):
+                    items_dict,
+                    items,
+                    mappings):
         """Generic method to get common items (hubs,
         edges, etc.) between different PSNs.
         """
@@ -945,10 +1055,25 @@ class PSNGroup:
             # items common to all PSNs in the combination, 
             # associated to the values those items have
             # in each PSN of the combination
-            results[combo] = \
-                {psn_label : \
-                    {e : items_dict[psn_label][e] for e in inters} \
-                 for psn_label in combo}
+
+            # Retro-map integers to the corresponding Residue
+            # instances in each PSN
+
+            if items == "nodes":
+                results[combo] = \
+                    {psn_l : \
+                        {mappings[0][n][psn_l] : \
+                            items_dict[psn_l][n] for n in inters} \
+                     for psn_l in combo}
+
+            elif items == "edges":
+                results[combo] = \
+                    {psn_l : \
+                        {(mappings[0][n1][psn_l], 
+                          mappings[0][n2][psn_l]) : \
+                            items_dict[psn_l][(n1, n2)] \
+                                for (n1, n2) in inters} \
+                     for psn_l in combo}
         
         # Return the results
         return results
@@ -965,7 +1090,8 @@ class PSNGroup:
 
     def get_common_hubs(self,
                         min_degree = 1,
-                        max_degree = None):
+                        max_degree = None,
+                        node_fmt = "strings"):
         """Get the common hubs for each possible subset of PSNs
         in the PSNgroup.
 
@@ -974,6 +1100,8 @@ class PSNGroup:
         min_degree : see `PSN.get_hubs`
 
         max_degree : see `PSN.get_hubs`
+
+        node_fmt : see `PSN.get_hubs`
 
         Returns
         -------
@@ -988,22 +1116,35 @@ class PSNGroup:
         # Initialize an empty dictionary to store all
         # hubs found in the PSNs
         hubs_dict = {}
+
+        # Get the mappings for the chosen node format
+        mappings = self.mappings[node_fmt]
         
         # For each PSN
-        for label, psn in self.psns.items():
-            # Add the hubs in the PSN to the dictionary
-            hubs_dict[label] = psn.get_hubs(min_degree = min_degree,
-                                            max_degree = max_degree,
-                                            node_fmt = "strings")
+        for psn_l, psn in self.psns.items():
+
+            # Calculate the hubs
+            hubs = psn.get_hubs(min_degree = min_degree,
+                                max_degree = max_degree,
+                                node_fmt = node_fmt)
+            
+            # Add the hubs in the PSN to the dictionary,
+            # after having converted each node to its
+            # integer representation        
+            hubs_dict[psn_l] = \
+                {mappings[1][psn_l][h] : v for h, v in hubs.items()}
         
         # Return the common hubs for each subset of PSNs
-        return self._get_common(items_dict = hubs_dict)
+        return self._get_common(items_dict = hubs_dict,
+                                items = "nodes",
+                                mappings = mappings)
 
 
     def get_common_edges(self,
                          min_weight = None,
                          max_weight = None,
-                         mode = "all"):
+                         mode = "all",
+                         node_fmt = "strings"):
         """Get the common edges for each possible subset of PSNs
         in the PSNgroup.
 
@@ -1014,6 +1155,8 @@ class PSNGroup:
         max_weight : see `PSN.get_edges`
 
         mode : see `PSN.get_edges`
+
+        node_fmt : see `PSN.get_edges`
 
         Returns
         -------
@@ -1028,15 +1171,28 @@ class PSNGroup:
         # Initialize an empty dictionary to store all
         # edges found in the PSNs
         edges_dict = {}
+
+        # Get the mappings for the chosen node format
+        mappings = self.mappings[node_fmt]
         
         # For each PSN
-        for label, psn in self.psns.items():
+        for psn_l, psn in self.psns.items():
+            
             # Add the edges in the PSN to the dictionary
-            edges_dict[label] = \
+            edges = \
                 psn.get_edges(min_weight = min_weight,
                               max_weight = max_weight,
                               mode = mode,
-                              node_fmt = "strings")
+                              node_fmt = node_fmt)
+
+            # Add the edges in the PSN to the dictionary,
+            # after having converted each node to its
+            # integer representation        
+            edges_dict[psn_l] = \
+                {(mappings[1][psn_l][u], mappings[1][psn_l][v]) : w \
+                 for (u, v), w in edges.items()}
         
         # Return the common edges for each subset of PSNs
-        return self._get_common(items_dict = edges_dict)     
+        return self._get_common(items_dict = edges_dict,
+                                items = "edges",
+                                mappings = mappings)   
