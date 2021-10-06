@@ -6,7 +6,7 @@
 #    Hard-coded defaults. Should only be changed
 #    for development purposes.
 #
-#    Copyright (C) 2020 Valentina Sora 
+#    Copyright (C) 2021 Valentina Sora 
 #                       <sora.valentina1@gmail.com>
 #                       Matteo Tiberti 
 #                       <matteo.tiberti@gmail.com> 
