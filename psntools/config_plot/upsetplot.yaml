@@ -1,0 +1,83 @@
+# Configuration file for plotting an UpSet plot [1] representing
+# the sets of hubs found in different PSNs.
+#
+# [1] Lex, Alexander, et al. "UpSet: visualization of 
+#     intersecting sets." IEEE transactions on visualization
+#     and computer graphics 20.12 (2014): 1983-1992.
+
+
+# Version of the configuration file
+version: 1
+
+
+#------------------------ OUTPUT FILE OPTIONS ------------------------#
+
+
+# Output file settings (passed to matplotlib.pyplot.savefig)
+output:
+  # DPI (the higher the number, the higher the resolution)
+  dpi: 300
+  # Whether to have a transparent or opaque background
+  transparent: True
+  # Bbox in inches. If 'tight', use tight layout for the figure
+  bbox_inches: "tight"
+
+
+#-------------------------- UPSETPLOT OPTIONS ------------------------#
+  
+
+# Plot settings
+plot:
+
+  # Options for data manipulation before plotting
+  data:
+    # How to sort the sets intersections:
+    # - 'degree' means sorting by the intersections' degrees (i.e.
+    #   how many sets are intersecting);
+    # - 'cardinality' means sorting by the number of elements in each
+    #   intersection.
+    sort_by: "degree"
+    # Whether to sort in ascending order
+    ascending: True
+    # Minimum cardinality for intersection to be considered
+    min_card: 1
+    # Maximum cardinality for an intersection to be considered
+    max_card: !!null
+    # Minimum degree (i.e. minimum number of intersecting sets) for
+    # an intersection to be considered.
+    min_deg: 2
+    # Maximum degree (i.e. maximum number of intersecting sets) for
+    # an intersection to be considered.
+    max_deg: !!null
+
+  # Settings for the UpSet plot construction
+  # (passed to psntools.plotting.UpSetPlot.plot)
+  upsetplot:
+    
+    # Color(s) to use for points representing the intersections
+    inter_color: "red"
+    # Color(s) to use for bars representing sets
+    sets_color: "Set2"
+    # Color to use for points representing non-intersecting sets
+    noninter_color: "#929292"
+    # Color of the shaded rows
+    shading_color: "#f1f1f1"
+    # String representing the line style to use
+    # for the vertical lines (according to
+    # the `matplotlib` convention)
+    linestyle_matrix: "-"
+    # Upper limit of the y axis of the size bars. 
+    # If `!null`, it will be the highest interaction size found
+    top_sizebars: !!null
+    # Spacing for the ticks on the y axis of the size bars. If `!null`,
+    # it will be determined automatically from the data.
+    yspace_sizebars: !!null
+    # Left (upper) limit of the y axis of the sets' bars. If `!null`,
+    # it will be the maximum set size found in the data.
+    top_setbars: !!null
+    # Spacing for the ticks on the y axis of the sets bars. If `!null`,
+    # it will determined automatically from the data.
+    yspace_setbars: !!null
+    # Path to a custom font to be used for all text elements
+    # in the plot.
+    custom_fpath: !!null

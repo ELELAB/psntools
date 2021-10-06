@@ -5,7 +5,7 @@
 #
 #    Utilities to plot results from PSN analyses.
 #
-#    Copyright (C) 2020 Valentina Sora 
+#    Copyright (C) 2021 Valentina Sora 
 #                       <sora.valentina1@gmail.com>
 #                       Matteo Tiberti 
 #                       <matteo.tiberti@gmail.com> 
@@ -35,6 +35,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 # psntools
+import psntools.upset as upset
 from ._util import (
     generate_colorbar,
     generate_heatmap_annotations,
@@ -47,35 +48,38 @@ from ._util import (
 
 
 
-#--------------------------------- Plot ------------------------------#
+# Get the module logger
+logger = log.getLogger(__name__)
 
 
 
-def plot_heatmap_nodes(df, \
-                       outfile, \
-                       configfile, \
-                       selected_nodes = None, \
-                       nodes_per_page = 20, \
-                       psn_labels = None, \
+def plot_heatmap_nodes(df,
+                       outfile,
+                       configfile,
+                       selected_nodes = None,
+                       nodes_per_page = 20,
+                       psn_labels = None,
                        node_labels = None):
     """Plot a heatmap with selected nodes on the x-axis and the value
     of a specific metric for different PSNs on the y-axis.
 
     Parameters
     ----------
+    df : `pandas.DataFrame`
+        Data frame containing the data.
+
     outfile : `str`
         Output PDF file.
 
     configfile : `str`
-        Name of/path to the configuration file to be used for
-        plotting.
+        Configuration file to be used for plotting.
 
     selected_nodes : `list`
         Include only these nodes (must be be a list of the nodes'
         string representations).
 
     nodes_per_page : `int`, default: `20`
-        How many nodes to be plotted on each page.
+        How many nodes to be plotted on each page of the output file.
 
     psn_labels : `list` or `None`, default: `None`
         List of custom labels to be used for the PSNs represented
@@ -179,7 +183,7 @@ def plot_heatmap_nodes(df, \
             nan_cells = np.argwhere(np.isnan(sub_df.values))
 
 
-            #------------------------- Plot --------------------------#
+            #----------------------- Plotting ------------------------#
 
 
             # Create a new figure
@@ -245,14 +249,13 @@ def plot_barplot_connected_components(df,
     Parameters
     ----------
     df : `pandas.DataFrame`
-        Dataframe containing the data.
+        Data frame containing the data.
 
     outfile : `str`
         Output PDF file.
 
     configfile : `str`
-        Name of/path to the configuration file to be used for
-        plotting.
+        Configuration file to be used for plotting.
 
     n_ccs : `int` or `None`, default: `5`
         How many of the most populated connected components
@@ -308,6 +311,7 @@ def plot_barplot_connected_components(df,
 
     # Clear the figure
     plt.clf()
+    
     # Close the current figure window
     plt.close()
 
@@ -340,9 +344,9 @@ def plot_barplot_connected_components(df,
              config = config_xaxis)
 
     # Set the y-axis
-    set_axis(ax = ax, \
-             axis = "y", \
-             ticks = y_ticks, \
+    set_axis(ax = ax,
+             axis = "y",
+             ticks = y_ticks,
              config = config_yaxis)
 
     # Hide top and right sping
@@ -351,3 +355,46 @@ def plot_barplot_connected_components(df,
 
     # Save the plot
     plt.savefig(outfile, **config_out)
+
+
+def plot_upsetplot(psngroup,
+                   item_type,
+                   outfile,
+                   configfile,
+                   **kwargs):
+    """Plot an UpSet plot to visualize the intersections between
+    the sets of hubs or edges found in the PSNs of a PSN group.
+
+    Parameters
+    ----------
+    psngroup : `psntools.core.PSNGroup`
+        PSN group.
+
+    item_type : `str`, accepted values: `"hubs"`, `"edges"`,
+                 default: `"hubs"`
+        Whether to calculate intersections of hubs or edges.
+
+    outfile : `str`
+        Output PDF file.
+
+    configfile : `str`
+        Configuration file to be used for plotting.
+
+    Returns
+    -------
+    `None`
+    """
+
+    # Get the plot configuration
+    config = get_config_plot(configfile = configfile)
+
+    # Initialize the UpSet plot
+    up = upset.UpSetPlot(psngroup = psngroup,
+                         item_type = item_type,
+                         **config["plot"]["data"],
+                         **kwargs)
+
+    # Generate and save the plot
+    up.plot(outfile = outfile, 
+            **{**config["plot"]["upsetplot"],
+               **config["output"]})

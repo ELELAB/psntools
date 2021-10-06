@@ -5,7 +5,7 @@
 #
 #    Module where PSN and PSNGroup live.
 #
-#    Copyright (C) 2020 Valentina Sora 
+#    Copyright (C) 2021 Valentina Sora 
 #                       <sora.valentina1@gmail.com>
 #                       Matteo Tiberti 
 #                       <matteo.tiberti@gmail.com> 
@@ -31,7 +31,7 @@
 # Standard library
 import inspect
 import itertools
-import logging
+import logging as log
 import math
 # Third-party packages
 import numpy as np
@@ -40,7 +40,11 @@ from MDAnalysis.core.groups import Residue
 import pandas as pd
 import networkx as nx
 import networkx.algorithms.centrality as nxcentr
-from networkx.algorithms.operators.binary import intersection as nxi
+
+
+
+# Get the module logger
+logger = log.getLogger(__name__)
 
 
 
@@ -59,7 +63,7 @@ class PSN:
     _NODE_ATTRS = {"segid", "ix", "resnum", "resname"}
 
     # Which methods are allowed to modify the attributes of a PSN
-    # instance after instantiation
+    # instance after instantiation (i.e., selection methods)
     _ALLOWED_TO_SET = {"select_edges", "select_nodes"}  
     
     # Metrics that have been implemented
@@ -88,7 +92,7 @@ class PSN:
     NODE_STR_FMT = "{segid}-{resnum}{resname}"
 
     # Default segment identifier if no valid segment ID is provided
-    # in the topology
+    # in the universe
     DEFAULT_SEGID = "SYSTEM"
 
     
@@ -176,7 +180,7 @@ class PSN:
         
         # For each residue
         for res in residues:
-            # For each attribute
+            # For each residue's attribute
             for a in self._NODE_ATTRS:
                 # Get its value
                 value = getattr(res, a)
@@ -254,16 +258,19 @@ class PSN:
         as keys and some property of theirs as values.
         """
 
-        # if nodes should be Residue instances
+        # If nodes should be Residue instances
         if node_fmt == "residues":
-            # just return the dictionary
+            
+            # Just return the dictionary
             return d
         
-        # if nodes should be strings
+        # If nodes should be strings
         elif node_fmt == "strings":
-            # get the mapping between Residue instances and strings
+            
+            # Get the mapping between Residue instances and strings
             residues2strings = self.get_nodes_residues2strings()
-            # return the dictionary with nodes converted to strings
+            
+            # Return the dictionary with nodes converted to strings
             return {residues2strings[n] : v for n, v in d.items()}
 
 
@@ -274,16 +281,19 @@ class PSN:
         and some property of theirs as values.
         """
 
-        # if nodes should be Residue instances
+        # If nodes should be Residue instances
         if node_fmt == "residues":
-            # just return the dictionary
+            
+            # Just return the dictionary
             return d
         
-        # if nodes should be strings
+        # If nodes should be strings
         elif node_fmt == "strings":
-            # get the mapping between Residue instances and strings
+            
+            # Get the mapping between Residue instances and strings
             residues2strings = self.get_nodes_residues2strings()
-            # return the dictionary with nodes converted to strings
+            
+            # Return the dictionary with nodes converted to strings
             return \
                 {(residues2strings[u], residues2strings[v]) : w \
                  for ((u, v), w) in d.items()}
@@ -295,8 +305,9 @@ class PSN:
 
 
     def get_nodes_residues2strings(self):
-        """Return a mapping between `MDAnalysis.core.groups.Residue`
-        instances and their string representations.
+        """Return a mapping between nodes as
+        `MDAnalysis.core.groups.Residue` instances and their
+        string representations.
 
         Parameters
         ----------
@@ -352,11 +363,19 @@ class PSN:
         metric_kws : `dict`
             Keyword arguments to be passed to the method
             computing the metric.
+
+        Returns
+        -------
+        `dict`
+            Dictionary mapping each node to the corresponding
+            metric's value.
         """
 
         # Get the method that computes the metric
         method = self._METRICS[kind][metric]["method"]
 
+        # Get the data type that should be returned by
+        # the method
         datatype = self._METRICS[kind][metric]["datatype"]
 
         # Call the method with the provided keyword arguments
@@ -387,8 +406,7 @@ class PSN:
         mode : `str` [`"all"`, `"intrachain"`, `"interchain"`],
                 default: `"all"`
             Which edges should be selected (all, those between chains
-            or within a single chain). It works only if nodes are
-            represented by `MDAnalysis.core.groups.Residue` instances.
+            or within a single chain).
 
         node_fmt : `str` [`"residues"`, `"strings"`],
               default: `"residues"`
@@ -404,45 +422,43 @@ class PSN:
 
         # If no minimum weight was set, set the minimum to minus
         # infinite (no minimum)
-        min_weight = float(min_weight) if min_weight else float("-inf")
+        min_weight = \
+            float(min_weight) if min_weight is not None \
+            else float("-inf")
         
         # If no maximum weight was set, set the maximum to infinite
         # (no maximum)
-        max_weight = float(max_weight) if max_weight else float("inf")
+        max_weight = \
+            float(max_weight) if max_weight is not None \
+            else float("inf")
 
-        # Initialize the selected edges to all edges
-        selected_edges = set(self.graph.edges(data = "weight"))
-
-        # If nodes are represented as Residue instances
-        if node_fmt == "residues":
+        # If all edges should be kept
+        if mode == "all":
+            # Select all edges
+            selected_edges = \
+                set([(u, v, w) for (u, v, w) \
+                    in self.graph.edges(data = "weight")])  
             
-            # If all edges should be kept
-            if mode == "all":
-                # Select all edges
-                selected_edges = \
-                    set([(u, v, w) for (u, v, w) \
-                         in self.graph.edges(data = "weight")])  
+        # If only edges between chains should be kept
+        elif mode == "interchain":
+            # Keep edges if segid is different
+            selected_edges = \
+                set([(u, v, w) for (u, v, w) \
+                    in self.graph.edges(data = "weight") \
+                    if u.segid != v.segid])         
             
-            # If only edges between chains should be kept
-            elif mode == "interchain":
-                # Keep edges if segid is different
-                selected_edges = \
-                    set([(u, v, w) for (u, v, w) \
-                         in self.graph.edges(data = "weight") \
-                         if u.segid != v.segid])          
+        # If only edges within single chains should be kept
+        elif mode == "intrachain":
+            # Keep edges if segid is the same
+            selected_edges = \
+                set([(u, v, w) for (u, v, w) \
+                    in self.graph.edges(data = "weight") \
+                    if u.segid == v.segid])
             
-            # If only edges within single chains should be kept
-            elif mode == "intrachain":
-                # Keep edges if segid is the same
-                selected_edges = \
-                    set([(u, v, w) for (u, v, w) \
-                         in self.graph.edges(data = "weight") \
-                         if u.segid == v.segid])
-            
-            # If an unrecognized mode was passed
-            else:
-                # Raise an error
-                raise ValueError(f"Unrecognized mode '{mode}.'")
+        # If an unrecognized mode was passed
+        else:
+            # Raise an error
+            raise ValueError(f"Unrecognized mode '{mode}.'")
 
         # Get the edges
         edges = {(u, v) : w for (u, v, w) in selected_edges \
@@ -472,7 +488,7 @@ class PSN:
         Returns
         -------
         `dict`
-            Dictionary mapping each hub to its degree.
+            Dictionary mapping each node to its degree.
         """
 
         # Get the degree of all nodes
@@ -510,7 +526,8 @@ class PSN:
         """
         
         # If no maximum degree was set, set it to infinite
-        max_degree = max_degree if max_degree else float("inf")
+        max_degree = \
+            max_degree if max_degree is not None else float("inf")
         
         # Get the hubs
         hubs = {n : v for n, v \
@@ -522,9 +539,9 @@ class PSN:
 
 
     def get_betweenness_centrality(self,
-                                   node_fmt,
+                                   node_fmt = "residues",
                                    **kwargs):
-        """Compute betweenness centrality for each node of the PSN.
+        """Compute the betweenness centrality for each node of the PSN.
         This function is a wrapper, tailored for PSNs, around 
         `networkx.algorithms.centrality.betweennes_centrality`.
 
@@ -537,13 +554,14 @@ class PSN:
             (`"residues"`) or formatted strings (`"strings"`).
 
         **kwargs
-            Keyword arguments that will be passed to the
-            NetworkX function performing the calculation.
+            Keyword arguments that will be passed to
+            `networkx.algorithms.centrality.betweennes_centrality`.
 
         Returns
         -------
         `dict`
-            Dictionary mapping each node to its centrality value.
+            Dictionary mapping each node to its betweenness
+            centrality value.
         """
 
         # Get the betweenness centrality
@@ -554,9 +572,9 @@ class PSN:
 
 
     def get_closeness_centrality(self,
-                                 node_fmt,
+                                 node_fmt = "residues",
                                  **kwargs):
-        """Compute closeness centrality for each node of the PSN.
+        """Compute the closeness centrality for each node of the PSN.
         This function is a wrapper, tailored for PSNs, around 
         `networkx.algorithms.centrality.closeness_centrality`.
 
@@ -570,13 +588,14 @@ class PSN:
             (`"residues"`) or formatted strings (`"strings"`).
 
         **kwargs
-            Keyword arguments that will be passed to the
-            NetworkX function performing the calculation.
+            Keyword arguments that will be passed to
+            `networkx.algorithms.centrality.closeness_centrality`.
 
         Returns
         -------
         `dict`
-            Dictionary mapping each node to its centrality value.
+            Dictionary mapping each node to its closeness
+            centrality value.
         """
 
         # Get the closeness centrality
@@ -610,8 +629,8 @@ class PSN:
 
         ascending : `bool`, default: `False`
             Whether the connected components will be 
-            reported in ascending order of size 
-            (the smallest ones first).
+            reported by increasing size (those with
+            less nodes first).
 
         node_fmt : `str` [`"residues"`, `"strings"`],
               default: `"residues"`
@@ -627,10 +646,11 @@ class PSN:
         """
 
         # Default minimum size is 1
-        min_size = min_size if min_size else 1
+        min_size = min_size if min_size is not None else 1
         
         # Default maximum size is the number of nodes in the graph
-        max_size = max_size if max_size else len(self.graph.nodes)
+        max_size = \
+            max_size if max_size is not None else len(self.graph.nodes)
         
         # Get the connected components
         ccs = sorted(nx.connected_components(G = self.graph),
@@ -644,7 +664,7 @@ class PSN:
         
         # If nodes should be Residue instances
         if node_fmt == "residues":
-            # Just return the connected components
+            # Just return the list of connected components
             return ccs
         
         # If nodes should be strings
@@ -719,8 +739,8 @@ class PSN:
             
             # Inform the user that the pair has no paths
             if not has_path:
-                logging.info(f"No paths found between " \
-                             f"{source} and {target}.")
+                logger.info(f"No paths found between " \
+                            f"{source} and {target}.")
                 # Go on to the next pair
                 continue
 
@@ -781,7 +801,7 @@ class PSN:
         nodes : any iterable
             Iterable of strings formatted as specified in the
             `NODE_STR_FMT` attribute, each identifying a node
-            in the PSN to be kept.
+            in the PSN to be selected.
 
         Returns
         -------
@@ -814,16 +834,19 @@ class PSN:
 
         Parameters
         ----------
-        min_weight : see `PSN.get_edges`
+        min_weight : see `core.PSN.get_edges`
 
-        max_weight : see `PSN.get_edges`
+        max_weight : see `core.PSN.get_edges`
 
-        mode : see `PSN.get_edges`
+        mode : see `core.PSN.get_edges`
 
         Returns
         -------
         `None`
         """
+
+        # Get all nodes of the psn
+        all_nodes = self.graph.nodes(data = True)
         
         # Select the edges of interest
         selected_edges = \
@@ -834,13 +857,25 @@ class PSN:
         
         # It is necessary to create a copy() of the subgraph in order
         # to have a Graph object and not a simple view of the Graph
-        self.graph = \
+        new_graph = \
             self.graph.edge_subgraph(edges = selected_edges).copy()
+
+        # Check which nodes of the original PSN got lost in the
+        # subgraphing procedure (orphan nodes that had no edges
+        # among the selected ones)
+        additional_nodes = \
+            [n for n in all_nodes if n not in \
+             new_graph.nodes(data = True)]
+
+        # Add the orphan nodes back to the graph
+        new_graph.add_nodes_from(additional_nodes)
+
+        # Update the graph attribute
+        self.graph = new_graph
         
         # Update the matrix attribute
         self.matrix = \
             nx.convert_matrix.to_numpy_matrix(G = self.graph)
-
 
 
         
@@ -891,11 +926,14 @@ class PSNGroup:
             corresponding `PSN` instance.
 
         mappings : `str`
-            CSV file containing the mappings between
-            all nodes of the PSNs in the group (rows
-            represent distinct nodes, while columns
-            represent the PSNs and are named consistently
-            with the PSNs' labels).
+            Dictionary of mappings between nodes of the
+            PSNs in the group. All "equivalent" nodes in the
+            PSNs have the same automatically-generated
+            integer labels. The dictionary contains a mapping
+            of the integer labels to the corresponding Residue
+            instances in the PSNs (under the "residues" key) and
+            to the corresponding string representations (under the
+            "strings" key).
         """
 
         # Set the PSNs belonging to the PSN group
@@ -953,6 +991,8 @@ class PSNGroup:
                   universes,
                   matrices,
                   labels):
+        """Get the PSNs that will belong to the group.
+        """
 
         # If an iterable of PSN objects was passed
         if psns:
@@ -1093,15 +1133,15 @@ class PSNGroup:
                         max_degree = None,
                         node_fmt = "strings"):
         """Get the common hubs for each possible subset of PSNs
-        in the PSNgroup.
+        in the group.
 
         Parameters
         ----------
-        min_degree : see `PSN.get_hubs`
+        min_degree : see `core.PSN.get_hubs`
 
-        max_degree : see `PSN.get_hubs`
+        max_degree : see `core.PSN.get_hubs`
 
-        node_fmt : see `PSN.get_hubs`
+        node_fmt : see `core.PSN.get_hubs`
 
         Returns
         -------
@@ -1146,17 +1186,17 @@ class PSNGroup:
                          mode = "all",
                          node_fmt = "strings"):
         """Get the common edges for each possible subset of PSNs
-        in the PSNgroup.
+        in the group.
 
         Parameters
         ----------
-        min_weight : see `PSN.get_edges`
+        min_weight : see `core.PSN.get_edges`
 
-        max_weight : see `PSN.get_edges`
+        max_weight : see `core.PSN.get_edges`
 
-        mode : see `PSN.get_edges`
+        mode : see `core.PSN.get_edges`
 
-        node_fmt : see `PSN.get_edges`
+        node_fmt : see `core.PSN.get_edges`
 
         Returns
         -------

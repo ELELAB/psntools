@@ -7,7 +7,7 @@
 #
 #    *** PRIVATE *** not part of the public API
 #
-#    Copyright (C) 2020 Valentina Sora 
+#    Copyright (C) 2021 Valentina Sora 
 #                       <sora.valentina1@gmail.com>
 #                       Matteo Tiberti 
 #                       <matteo.tiberti@gmail.com> 
@@ -46,9 +46,9 @@ from .defaults import CONFIG_PLOT_DIR
 
 
 
-def _recursive_traverse(data, \
-                        actions, \
-                        keys = None, \
+def _recursive_traverse(data,
+                        actions,
+                        keys = None,
                         func = None):
     """Recursively traverse a dictionary performing actions on
     its items. It is used to traverse and modify the dictionary
@@ -145,7 +145,8 @@ def _get_config_plot_version_1(config):
 
 
 def get_config_plot(configfile):
-    """Get the plotting configuration."""
+    """Get the plotting configuration.
+    """
 
     # Get the name of the configuration file for plotting
     # (without extension)
@@ -372,7 +373,8 @@ def set_axis(ax,
              config,
              ticks = None,
              ticklabels = None):
-    """Set up the x- or y-axis."""
+    """Set up the x- or y-axis.
+    """
     
     if ticks is None:
         if axis == "x":
