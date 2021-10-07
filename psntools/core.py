@@ -1137,11 +1137,11 @@ class PSNGroup:
 
         Parameters
         ----------
-        min_degree : see `core.PSN.get_hubs`
+        min_degree : see `psntools.core.PSN.get_hubs`
 
-        max_degree : see `core.PSN.get_hubs`
+        max_degree : see `psntools.core.PSN.get_hubs`
 
-        node_fmt : see `core.PSN.get_hubs`
+        node_fmt : see `psntools.core.PSN.get_hubs`
 
         Returns
         -------
@@ -1190,13 +1190,13 @@ class PSNGroup:
 
         Parameters
         ----------
-        min_weight : see `core.PSN.get_edges`
+        min_weight : see `psntools.core.PSN.get_edges`
 
-        max_weight : see `core.PSN.get_edges`
+        max_weight : see `psntools.core.PSN.get_edges`
 
-        mode : see `core.PSN.get_edges`
+        mode : see `psntools.core.PSN.get_edges`
 
-        node_fmt : see `core.PSN.get_edges`
+        node_fmt : see `psntools.core.PSN.get_edges`
 
         Returns
         -------
