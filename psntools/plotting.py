@@ -362,7 +362,7 @@ def plot_upsetplot(psngroup,
                    outfile,
                    configfile,
                    **kwargs):
-    """Plot an UpSet plot to visualize the intersections between
+    """Generate an UpSet plot to visualize the intersections between
     the sets of hubs or edges found in the PSNs of a PSN group.
 
     Parameters
@@ -379,6 +379,13 @@ def plot_upsetplot(psngroup,
 
     configfile : `str`
         Configuration file to be used for plotting.
+
+    **kwargs
+        Keyword arguments to be passed to
+        `psntools.core.PSNGroup.get_common_hubs` or to
+        `psntools.core.PSNGroup.get_common_edges` (depending
+        on the `item_type`) for the calculation of common
+        hubs/edges in the `PSNGroup`.
 
     Returns
     -------
