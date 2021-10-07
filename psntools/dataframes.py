@@ -80,19 +80,16 @@ def get_psn_df(psn):
 
 
 def get_nodes_df(psn,
-                 metrics = None):
+                 metrics):
     """Create a data frame with nodes of a PSN and node metrics,
-    if requested. The node metrics will be computed on the fly or a
-    dictionary of dictionaries keyed on the metrics' names and on the
-    nodes (they must be `MDAnalysis.core.groups.Residue` instances)
-    can be passed if they were already calculated elsewhere.
+    if requested. The node metrics will be computed on the fly.
 
     Parameters
     ----------
     psn : `psntools.core.PSN`
         PSN.
 
-    metrics : `dict` or `None`, default: `None`
+    metrics : `dict`
         Dictionary of node metrics to be computed, mapping
         to dictionaries with the keyword arguments to be passed
         to the functions computing such metrics.
