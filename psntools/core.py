@@ -499,7 +499,7 @@ class PSN:
 
 
     def get_hubs(self,
-                 min_degree = 3,
+                 min_degree = 1,
                  max_degree = None,
                  node_fmt = "residues"):
         """Get the hubs of the PSN. A hub is defined as a node
