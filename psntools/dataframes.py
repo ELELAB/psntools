@@ -150,7 +150,8 @@ def get_edges_df(data = None,
     ----------
     data : `dict` or `None`, default: `None`
         Pre-computed dictionary containing the edges (like
-        the one returned by the `core.PSN.get_edges` method).
+        the one returned by the 
+        `psntools.core.PSN.get_edges` method).
 
     psn : `psntools.core.PSN` or `None`, default: `None`
         PSN.
@@ -216,7 +217,7 @@ def get_edges_df(data = None,
     return df
 
 
-def get_hubs_df(psn = None,
+def get_hubs_df(psn,
                 sort_by = "degree",
                 ascending = False,
                 **kwargs):
@@ -224,11 +225,11 @@ def get_hubs_df(psn = None,
 
     Parameters
     ----------
-    psn : `psntools.core.PSN` or `None`, default: `None`
+    psn : `psntools.core.PSN`
         PSN.
 
-    sort_by : `str`, [`"node"`, `"weight"`],
-               default: `"weight"`
+    sort_by : `str`, [`"node"`, `"degree"`],
+               default: `"degree"`
         Whether to sort the hubs by node name or node degree.
 
     ascending : `bool`, default: `False`
@@ -241,7 +242,7 @@ def get_hubs_df(psn = None,
 
     Returns
     -------
-    `pandas.DataFrame`
+    df : `pandas.DataFrame`
         Output data frame.
 
     Notes
@@ -320,7 +321,7 @@ def get_connected_components_df(data = None,
         (as the one returned by the 
         `psntools.core.PSN.get_connected_components` method).
 
-    psn : `core.PSN.PSN` or `None`, default: `None`
+    psn : `psntools.core.PSN` or `None`, default: `None`
         PSN.
 
     cc_prefix : `str`, default: `"CC_"`
@@ -505,7 +506,8 @@ def get_common_hubs_dfs(data = None,
 
     Returns
     -------
-    `None`
+    dfs : `dict`
+        Dictionary of data frames containing the common hubs.
     """
 
     # Create a dictionary to store the output data frames
@@ -566,7 +568,8 @@ def get_common_edges_dfs(data = None,
 
     Returns
     -------
-    `None`
+    dfs : `dict`
+        Dictionary of data frames containing the common edges.
     """
 
     # Create a dictionary to store the output data frames
