@@ -126,7 +126,7 @@ def write_nodes_csv(outfile,
     df : `pandas.DataFrame` or `None`, default: `None`
         Pre-computed data frame containing the values for the
         node metrics of interest (like the one returned by
-        `dataframes.get_nodes_df`).
+        `psntools.dataframes.get_nodes_df`).
 
     psn : `psntools.core.PSN` or `None`, default: `None`
         PSN.
@@ -358,7 +358,7 @@ def write_connected_components_csv(outfile,
               index = False)
 
 
-def write_shortest_paths_csvs(shortest_paths = None,
+def write_shortest_paths_csvs(data = None,
                               psn = None,
                               outfiles_prefix = "path_",
                               sort_by = ("length", "weight"),
@@ -406,8 +406,9 @@ def write_shortest_paths_csvs(shortest_paths = None,
         Format for floating point numbers in the output CSV files.
 
     **kwargs
-        Arguments to be passed to `psntools.core.PSN.get_shortest_paths`
-        for shortest paths calculation, if neither `df` nor `data`
+        Arguments to be passed to 
+        `psntools.core.PSN.get_shortest_paths`for shortest
+        paths calculation, if neither `df` nor `data`
         have been passed.
 
     Returns
@@ -587,8 +588,8 @@ def write_common_edges_csvs(dfs = None,
                             data = None,
                             psngroup = None,
                             outfiles_prefix = "edges_",
-                            node_sep = "_",
                             psn_sep = "_",
+                            node_sep = "_",
                             csv_sep = ",",
                             float_fmt = "%2.3f",
                             **kwargs):
