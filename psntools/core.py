@@ -1008,7 +1008,7 @@ class PSNGroup:
         # If labels were not passed
         if not labels:
             # Create a 0-based indexing
-            labels = range(len(psns))
+            labels = [str(i) for i in range(len(psns))]
 
         # Create a dictionary mapping each label
         # to the corresponding PSN

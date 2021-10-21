@@ -252,7 +252,14 @@ def get_hubs_df(psn,
     the corresponding formatted strings, therefore there
     is no option available to pass directly a dictionary
     of pre-computed hubs.
+
+    'node_fmt', if passed, will not be used.
     """
+
+    # Remove the 'node_fmt' key from the dictionary
+    # of keyword arguments to be passed to
+    # psntools.core.PSN.get_hubs
+    kwargs = {k : v for k, v in kwargs.items() if k != "node_fmt"}
 
     # Get the hubs
     data = psn.get_hubs(node_fmt = "residues", **kwargs)
@@ -351,7 +358,7 @@ def get_connected_components_df(data = None,
            for i, cc in enumerate(data, 1)}
 
     # Generate a data frame
-    df = pd.DataFrame.from_dict(ccs, orient = "index").reset_index()
+    df = pd.DataFrame.from_dict(data, orient = "index").reset_index()
         
     # Set the data frame columns
     df.columns = ["cc", "nodes"]
