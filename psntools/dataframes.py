@@ -174,44 +174,68 @@ def get_edges_df(data = None,
         Output data frame.
     """
 
+    # Create a list to store the edges
+    edges = []
+
     # If no pre-computed data were passed
     if data is None:
-        # Get the edges
-        data = psn.get_edges(node_fmt = "strings", **kwargs)
         
-    # Convert the dictionary to a list of flat tuples
-    edges = [(n1, n2, v) for (n1, n2), v in data.items()]
+        # Get the edges
+        data = psn.get_edges(node_fmt = "residues", **kwargs)
+    
+    # Get the mapping between the Residue representation
+    # of nodes and their string representation
+    residues2strings = psn.get_nodes_residues2strings()
+    
+    # For each edge
+    for (n1, n2), v in data.items():
+
+        # Save data of interest in the list
+        edges.append({"node1" : residues2strings[n1],
+                      "n1_segid" : n1.segid,
+                      "n1_resnum" : n1.resnum,
+                      "node2" : residues2strings[n2],
+                      "n2_segid" : n2.segid,
+                      "n2_resnum" : n2.resnum,
+                      "weight" : v})
     
     # Generate a data frame from the list
-    df = pd.DataFrame(edges,
-                      columns = ["node1", "node2", "weight"])
+    df = pd.DataFrame(edges)
 
     # If sorting by node was requested
     if sort_by == "node":
         
         # Sorting columns are those containing the nodes
-        sort_cols = [df.columns[0], df.columns[1]]
+        sort_cols = \
+            ["n1_segid", "n1_resnum", "n2_segid", "n2_resnum"]
         
         # The user's preference of sorting order will
         # be applied to both columns
-        ascending = [ascending] * 2
+        ascending = [ascending] * 4
         
     # If sorting by weight was requested
     elif sort_by == "weight":
         
         # Sorting columns are weight and then those
         # containing the nodes
-        sort_cols = [df.columns[2], df.columns[0], df.columns[1]]
+        sort_cols = \
+            ["weight", "n1_segid", "n1_resnum",
+             "n2_segid", "n2_resnum"]
         
         # The user's preference of sorting will
         # only be applied to the weight column, while
         # the secondary sorting on nodes will happen
         # in ascending lexicographic order
-        ascending = [ascending, True, True]
+        ascending = [ascending, True, True, True, True]
 
     # Sort the edges
     df = df.sort_values(by = sort_cols,
                         ascending = ascending)
+
+    # Drop unnecessary columns
+    df = \
+        df.drop(["n1_segid", "n1_resnum", "n2_segid", "n2_resnum"],
+                axis = 1)
 
     # Return the data frame
     return df
