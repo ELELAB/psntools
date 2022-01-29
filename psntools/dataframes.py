@@ -410,7 +410,7 @@ def get_nodes_df_psngroup(psngroup,
         # Get the nodes' dataframe for the single PSN
         node_df = get_nodes_df(psn = psn,
                                metrics = metric)
-        
+
         # Add the information about chain ID and residue
         # number for each node of the current PSN to the
         # dataframe that will be used for indexing
@@ -422,11 +422,13 @@ def get_nodes_df_psngroup(psngroup,
         metric_name = list(metric.keys())[0]
         dfs[label] = node_df[metric_name].squeeze()
 
-    # Create the data frame and reindex it
-    df = pd.DataFrame(dfs)
+    # Create the index to be used in the final dataframe
+    index = \
+        pd.concat(df_index).drop_duplicates(\
+            ).sort_values(["segid", "resnum"]).index
 
-    # Rename the index column
-    df.index.name = "residues"
+    # Create the data frame and reindex it
+    df = pd.DataFrame(dfs).reindex(index)
 
     # Return the data frame
     return df

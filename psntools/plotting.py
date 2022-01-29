@@ -48,11 +48,6 @@ from ._util import (
 
 
 
-# Get the module logger
-logger = log.getLogger(__name__)
-
-
-
 def plot_heatmap_nodes(df,
                        outfile,
                        configfile,
