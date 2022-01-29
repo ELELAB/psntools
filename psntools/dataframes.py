@@ -142,7 +142,7 @@ def get_nodes_df(psn,
 def get_edges_df(data = None,
                  psn = None,
                  sort_by = "node",
-                 ascending = False,
+                 ascending = True,
                  **kwargs):
     """Create a data frame listing the edges in the PSN.
 
@@ -157,10 +157,10 @@ def get_edges_df(data = None,
         PSN.
 
     sort_by : `str`, [`"node"`, `"weight"`],
-               default: `"weight"`
+               default: `"node"`
         Whether to sort the edges by node name or weight.
 
-    ascending : `bool`, default: `False`
+    ascending : `bool`, default: `True`
         Whether the sorting is ascending. 
 
     **kwargs:
