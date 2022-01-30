@@ -341,7 +341,8 @@ def get_hubs_df(psn,
 def get_connected_components_df(data = None, 
                                 psn = None, 
                                 cc_prefix = "CC_",
-                                node_sep = "."):
+                                node_sep = ".",
+                                **kwargs):
     """Get a data frame containing the connected components
     found in a PSN.
 
@@ -362,6 +363,11 @@ def get_connected_components_df(data = None,
 
     node_sep : `str`, default: `"."`
         Separator for the nodes in each connected component.
+
+    **kwargs:
+        Keyword arguments to be passed to
+        `psntools.core.PSN.get_connected_components`,
+        if `data` has not been passed.
         
     Returns
     -------
