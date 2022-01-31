@@ -107,6 +107,7 @@ class UpSetPlot:
                            item_type = item_type,
                            **kwargs)
 
+        # Assign to each set name an integer label
         self._names2ints = \
             {v : k for k, v in enumerate(self.setnames)}
 
@@ -158,17 +159,32 @@ class UpSetPlot:
                   item_type,
                   **kwargs):
 
+        # Create two empty lists to store the sets and the
+        # sets' names
         sets = []
         setnames = []
 
+        # For each PSN label/PSN pair in the PSNGroup
         for psn_label, psn in psngroup.psns.items():
+
+            # If the common items to be found are hubs
             if item_type == "hubs":
+                
+                # Find the set of hubs of the current PSN and append
+                # it to the list of sets
                 sets.append(set(psn.get_hubs(**kwargs).keys()))
+            
+            # If the common item to be found are edges
             elif item_type == "edges":
+
+                # Find the set of edges of the current PSN and append
+                # it to the list of sets
                 sets.append(set(psn.get_edges(**kwargs).keys()))
             
+            # Append the PSN label to the list of sets' names
             setnames.append(psn_label)
 
+        # Return sets and sets' names
         return sets, setnames
 
 
@@ -204,9 +220,17 @@ class UpSetPlot:
         # Empty list to store the intersections
         inters = []
 
+        # If the items considered are hubs
         if item_type == "hubs":
+
+            # Get the hubs common to each subset of PSNs in
+            # the PSNGroup
             common_items = psngroup.get_common_hubs(**kwargs)
+
+        # If the items considered are edges
         elif item_type == "edges":
+            # Get the edges common to each subset of PSNs in
+            # the PSNGroup
             common_items = psngroup.get_common_edges(**kwargs)
 
         # For each combination of PSNs
@@ -231,13 +255,17 @@ class UpSetPlot:
 
         # Sort the intersections by degree
         if sort_by == "degree":
+            
             # If sorting is ascending
             if ascending:
+                
                 # Sort the intersections by degree and return them
                 return sorted(inters,
                               key = lambda x: len(x[0]))
+            
             # Otherwise
             else:
+                
                 # Reverse the sorting and return the intersections
                 return sorted(inters,
                               key = lambda x: len(x[0]),
@@ -245,13 +273,17 @@ class UpSetPlot:
 
         # Sort the list by cardinality       
         elif sort_by == "cardinality":
+            
             # If sorting is ascending
             if ascending:
+                
                 # Sort the interactions by cardinality and return them
                 return sorted(inters,
                               key = lambda x: len(x[1]))
+            
             # Otherwise
             else:
+                
                 # Reverse-sort the interactions by cardinality and
                 # return them
                 return sorted(inters,
@@ -418,7 +450,7 @@ class UpSetPlot:
         # with that of the horizontal bar representing the sets,
         # hopefully to be get ridden of at some point
         self.ax_matrix.barh(\
-            range(len(self.sets)), np.repeat(1,len(self.sets)),
+            range(len(self.sets)), np.repeat(1, len(self.sets)),
             facecolor = "None")
 
 
@@ -579,6 +611,7 @@ class UpSetPlot:
                       sets_color,
                       top,
                       yspace,
+                      num_values_setbars,
                       custom_fpath):
         """Draw the horizontal bars representing
         the size of the single sets.
@@ -654,13 +687,51 @@ class UpSetPlot:
                                  align = "center")
 
         # Set the bar color(s)
-        for b, c in zip(barlist,facecolor):
+        for b, c in zip(barlist, facecolor):
             b.set_color(c)
         
         # Hide all spines apart from the bottom one
         self.ax_setbars.spines["top"].set_visible(False)
         self.ax_setbars.spines["left"].set_visible(False)
         self.ax_setbars.spines["right"].set_visible(False)
+        
+        # If no maximum value to display has been passed,
+        # take it from the data
+        if top is None:
+            top = max(y_data)
+
+        # If no space between the y-ticks has been passed,
+        # draw as many ticks as set by num_values_setbars
+        if yspace is None:
+
+            # Get an interval of step 5 between 0 and the
+            # maximum value to display        
+            x_ticks_interval = np.linspace(0, top, 5)
+
+            # Round up the distance between the first two points
+            # of the interval to the nearest integer
+            x_ticks_distance = \
+                int(np.ceil(x_ticks_interval[1] - x_ticks_interval[0]))
+        
+            # Generate the x-ticks on an interval composed by 5 steps,
+            # all of which represented by integers
+            x_ticks = np.arange(x_ticks_interval[0],
+                                x_ticks_distance*num_values_setbars,
+                                x_ticks_distance)
+
+        # If the space between the y-ticks has been passed
+        else:
+
+            # Set as many ticks as the space between 0 and top,
+            # spaced according to the value set by the user
+            xticks = np.range(0, top+yspace, yspace)
+        
+        # Set the ticks
+        self.ax_setbars.set_xticks(x_ticks)
+
+        # Set the limits for the bottom spine
+        self.ax_setbars.spines["bottom"].set_bounds(\
+            x_ticks[0], x_ticks[-1])
 
         # Generate the font properties
         fp_ticklabels = fm.FontProperties(fname = custom_fpath,
@@ -713,6 +784,7 @@ class UpSetPlot:
              yspace_sizebars = None,
              top_setbars = None,
              yspace_setbars = None,
+             num_values_setbars = None,
              custom_fpath = None):
         """Generate an UpSet plot.
 
@@ -795,6 +867,10 @@ class UpSetPlot:
             sets bars. If `None`, it will determined 
             automatically from the data.
 
+        num_values_setbars : `int` or `None`, default: `4`
+            Number of values to display on the x-axis
+            of the sets bars.
+
         custom_fpath : `str` or `None`, default: `None`
             Path to a custom font to be used for
             all texts in the plot.
@@ -840,6 +916,7 @@ class UpSetPlot:
         self._draw_setbars(sets_color = sets_color,
                            top = top_setbars,
                            yspace = yspace_setbars,
+                           num_values_setbars = num_values_setbars,
                            custom_fpath = custom_fpath)
 
         # Save the plot
@@ -847,3 +924,6 @@ class UpSetPlot:
                     dpi = dpi,
                     transparent = transparent,
                     bbox_inches = bbox_inches)
+
+        # Close the figure
+        plt.close()

@@ -1061,7 +1061,8 @@ class PSNGroup:
     def _get_common(self,
                     items_dict,
                     items,
-                    mappings):
+                    mappings,
+                    inters_mode):
         """Generic method to get common items (hubs,
         edges, etc.) between different PSNs.
         """
@@ -1069,9 +1070,9 @@ class PSNGroup:
         # Get all possible combinations of PSNs for which
         # common items need to be retrieved
         combinations = \
-            itertools.chain.from_iterable(\
-                [itertools.combinations(self.psns.keys(), i) \
-                for i in range(2, len(self.psns)+1)])       
+            list(itertools.chain.from_iterable(\
+                 [itertools.combinations(self.psns.keys(), i) \
+                  for i in range(1, len(self.psns)+1)]))
         
         # Initialize an empty dictionary to store the results
         results = {}
@@ -1088,7 +1089,29 @@ class PSNGroup:
             # Find the intersection between the items of the
             # PSNs in the current combination
             inters = set.intersection(*sets)
-            
+
+            # If the intersection mode is 'distinct'
+            if inters_mode == "distinct":
+
+                # For each PSN combination
+                for other_combo in combinations:
+
+                    # If it is not the current combination and it
+                    # is one with more elements
+                    if len(other_combo) > len(combo):
+
+                        # Create a set from the keys of each entry in
+                        # the items dictionary for each PSN in the
+                        # other combination
+                        other_sets = \
+                            [set(items_dict[i].keys())  
+                             for i in other_combo]
+                            
+                        # Remove from the current intersection those
+                        # nodes that are found also in the other
+                        # combination
+                        inters = inters - set.intersection(*other_sets)
+
             # Store the results for the current combination as
             # a dictionary where the names of the PSNs in the
             # combination are associated to the dictionary of
@@ -1131,6 +1154,7 @@ class PSNGroup:
     def get_common_hubs(self,
                         min_degree = 1,
                         max_degree = None,
+                        inters_mode = "distinct",
                         node_fmt = "strings"):
         """Get the common hubs for each possible subset of PSNs
         in the group.
@@ -1140,6 +1164,16 @@ class PSNGroup:
         min_degree : see `psntools.core.PSN.get_hubs`
 
         max_degree : see `psntools.core.PSN.get_hubs`
+
+        inters_mode : `str`, default: `"distinct"`
+            Intersection mode. If `"distinct"` and hub "1"
+            belongs to the intersection between sets A and B,
+            but it also belongs to the intersection between A, B,
+            and C, it will not be reported as a member of the
+            intersection between A and B, but only as a member
+            of the "stricter" intersection between A, B, and C.
+            If `"intersect"`, hub "1" will be reported as a member
+            of both intersections.
 
         node_fmt : see `psntools.core.PSN.get_hubs`
 
@@ -1177,13 +1211,15 @@ class PSNGroup:
         # Return the common hubs for each subset of PSNs
         return self._get_common(items_dict = hubs_dict,
                                 items = "nodes",
-                                mappings = mappings)
+                                mappings = mappings,
+                                inters_mode = inters_mode)
 
 
     def get_common_edges(self,
                          min_weight = None,
                          max_weight = None,
                          mode = "all",
+                         inters_mode = "distinct",
                          node_fmt = "strings"):
         """Get the common edges for each possible subset of PSNs
         in the group.
@@ -1195,6 +1231,16 @@ class PSNGroup:
         max_weight : see `psntools.core.PSN.get_edges`
 
         mode : see `psntools.core.PSN.get_edges`
+
+        inters_mode : `str`, default: `"distinct"`
+            Intersection mode. If `"distinct"` and hub "1"
+            belongs to the intersection between sets A and B,
+            but it also belongs to the intersection between A, B,
+            and C, it will not be reported as a member of the
+            intersection between A and B, but only as a member
+            of the "stricter" intersection between A, B, and C.
+            If `"intersect"`, hub "1" will be reported as a member
+            of both intersections.
 
         node_fmt : see `psntools.core.PSN.get_edges`
 
@@ -1235,4 +1281,5 @@ class PSNGroup:
         # Return the common edges for each subset of PSNs
         return self._get_common(items_dict = edges_dict,
                                 items = "edges",
-                                mappings = mappings)   
+                                mappings = mappings,
+                                inters_mode = inters_mode)   
