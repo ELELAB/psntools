@@ -1,0 +1,156 @@
+nohup: ignoring input
+                     :-) GROMACS - gmx make_ndx, 2021.2 (-:
+
+                            GROMACS is written by:
+     Andrey Alekseenko              Emile Apol              Rossen Apostolov     
+         Paul Bauer           Herman J.C. Berendsen           Par Bjelkmar       
+       Christian Blau           Viacheslav Bolnykh             Kevin Boyd        
+     Aldert van Buuren           Rudi van Drunen             Anton Feenstra      
+    Gilles Gouaillardet             Alan Gray               Gerrit Groenhof      
+       Anca Hamuraru            Vincent Hindriksen          M. Eric Irrgang      
+      Aleksei Iupinov           Christoph Junghans             Joe Jordan        
+    Dimitrios Karkoulis            Peter Kasson                Jiri Kraus        
+      Carsten Kutzner              Per Larsson              Justin A. Lemkul     
+       Viveca Lindahl            Magnus Lundborg             Erik Marklund       
+        Pascal Merz             Pieter Meulenhoff            Teemu Murtola       
+        Szilard Pall               Sander Pronk              Roland Schulz       
+       Michael Shirts            Alexey Shvetsov             Alfons Sijbers      
+       Peter Tieleman              Jon Vincent              Teemu Virolainen     
+     Christian Wennberg            Maarten Wolf              Artem Zhmurov       
+                           and the project leaders:
+        Mark Abraham, Berk Hess, Erik Lindahl, and David van der Spoel
+
+Copyright (c) 1991-2000, University of Groningen, The Netherlands.
+Copyright (c) 2001-2019, The GROMACS development team at
+Uppsala University, Stockholm University and
+the Royal Institute of Technology, Sweden.
+check out http://www.gromacs.org for more information.
+
+GROMACS is free software; you can redistribute it and/or modify it
+under the terms of the GNU Lesser General Public License
+as published by the Free Software Foundation; either version 2.1
+of the License, or (at your option) any later version.
+
+GROMACS:      gmx make_ndx, version 2021.2
+Executable:   /usr/local/gromacs-2021.2/bin/gmx
+Data prefix:  /usr/local/gromacs-2021.2
+Working dir:  /data/user/shared_projects/psntools_case_study/simulations_analysis/beclin1/2PON_1-156_21-43/replicate2/CHARMM22star_TIP3P/md/psn/pyinteraph2
+Command line:
+  gmx make_ndx -f ../../../../../../../../simulations/beclin1/2PON_1-156_21-43/replicate2/CHARMM22star_TIP3P/md/md.tpr -o protein.ndx
+
+
+Reading structure file
+Reading file ../../../../../../../../simulations/beclin1/2PON_1-156_21-43/replicate2/CHARMM22star_TIP3P/md/md.tpr, VERSION 4.6.5 (single precision)
+Reading file ../../../../../../../../simulations/beclin1/2PON_1-156_21-43/replicate2/CHARMM22star_TIP3P/md/md.tpr, VERSION 4.6.5 (single precision)
+
+GROMACS reminds you: "You're Insignificant" (Tricky)
+
+Going to read 0 old index file(s)
+Analysing residue names:
+There are:   179    Protein residues
+There are: 20897      Water residues
+There are:   130        Ion residues
+Analysing Protein...
+Analysing residues not classified as Protein/DNA/RNA/Water and splitting into groups...
+
+  0 System              : 65622 atoms
+  1 Protein             :  2801 atoms
+  2 Protein-H           :  1437 atoms
+  3 C-alpha             :   179 atoms
+  4 Backbone            :   537 atoms
+  5 MainChain           :   716 atoms
+  6 MainChain+Cb        :   880 atoms
+  7 MainChain+H         :   890 atoms
+  8 SideChain           :  1911 atoms
+  9 SideChain-H         :   721 atoms
+ 10 Prot-Masses         :  2801 atoms
+ 11 non-Protein         : 62821 atoms
+ 12 Water               : 62691 atoms
+ 13 SOL                 : 62691 atoms
+ 14 non-Water           :  2931 atoms
+ 15 Ion                 :   130 atoms
+ 16 NA                  :    71 atoms
+ 17 CL                  :    59 atoms
+ 18 Water_and_ions      : 62821 atoms
+
+ nr : group      '!': not  'name' nr name   'splitch' nr    Enter: list groups
+ 'a': atom       '&': and  'del' nr         'splitres' nr   'l': list residues
+ 't': atom type  '|': or   'keep' nr        'splitat' nr    'h': help
+ 'r': residue              'res' nr         'chain' char
+ "name": group             'case': case sensitive           'q': save and quit
+ 'ri': residue index
+
+> 
+Removed group 2 'Protein-H'
+Removed group 3 'C-alpha'
+Removed group 4 'Backbone'
+Removed group 5 'MainChain'
+Removed group 6 'MainChain+Cb'
+Removed group 7 'MainChain+H'
+Removed group 8 'SideChain'
+Removed group 9 'SideChain-H'
+Removed group 10 'Prot-Masses'
+Removed group 11 'non-Protein'
+Removed group 12 'Water'
+Removed group 13 'SOL'
+Removed group 14 'non-Water'
+Removed group 15 'Ion'
+Removed group 16 'NA'
+Removed group 17 'CL'
+Removed group 18 'Water_and_ions'
+Removed group 0 'System'
+
+> 
+                     :-) GROMACS - gmx trjconv, 2021.2 (-:
+
+                            GROMACS is written by:
+     Andrey Alekseenko              Emile Apol              Rossen Apostolov     
+         Paul Bauer           Herman J.C. Berendsen           Par Bjelkmar       
+       Christian Blau           Viacheslav Bolnykh             Kevin Boyd        
+     Aldert van Buuren           Rudi van Drunen             Anton Feenstra      
+    Gilles Gouaillardet             Alan Gray               Gerrit Groenhof      
+       Anca Hamuraru            Vincent Hindriksen          M. Eric Irrgang      
+      Aleksei Iupinov           Christoph Junghans             Joe Jordan        
+    Dimitrios Karkoulis            Peter Kasson                Jiri Kraus        
+      Carsten Kutzner              Per Larsson              Justin A. Lemkul     
+       Viveca Lindahl            Magnus Lundborg             Erik Marklund       
+        Pascal Merz             Pieter Meulenhoff            Teemu Murtola       
+        Szilard Pall               Sander Pronk              Roland Schulz       
+       Michael Shirts            Alexey Shvetsov             Alfons Sijbers      
+       Peter Tieleman              Jon Vincent              Teemu Virolainen     
+     Christian Wennberg            Maarten Wolf              Artem Zhmurov       
+                           and the project leaders:
+        Mark Abraham, Berk Hess, Erik Lindahl, and David van der Spoel
+
+Copyright (c) 1991-2000, University of Groningen, The Netherlands.
+Copyright (c) 2001-2019, The GROMACS development team at
+Uppsala University, Stockholm University and
+the Royal Institute of Technology, Sweden.
+check out http://www.gromacs.org for more information.
+
+GROMACS is free software; you can redistribute it and/or modify it
+under the terms of the GNU Lesser General Public License
+as published by the Free Software Foundation; either version 2.1
+of the License, or (at your option) any later version.
+
+GROMACS:      gmx trjconv, version 2021.2
+Executable:   /usr/local/gromacs-2021.2/bin/gmx
+Data prefix:  /usr/local/gromacs-2021.2
+Working dir:  /data/user/shared_projects/psntools_case_study/simulations_analysis/beclin1/2PON_1-156_21-43/replicate2/CHARMM22star_TIP3P/md/psn/pyinteraph2
+Command line:
+  gmx trjconv -f ../../../../../../../../simulations/beclin1/2PON_1-156_21-43/replicate2/CHARMM22star_TIP3P/md/Mol_An/traj_centered.xtc -s ../../../../../../../../simulations/beclin1/2PON_1-156_21-43/replicate2/CHARMM22star_TIP3P/md/md.tpr -n protein.ndx -b 0 -e 1 -o model0.pdb
+
+Will write pdb: Protein data bank file
+Reading file ../../../../../../../../simulations/beclin1/2PON_1-156_21-43/replicate2/CHARMM22star_TIP3P/md/md.tpr, VERSION 4.6.5 (single precision)
+Reading file ../../../../../../../../simulations/beclin1/2PON_1-156_21-43/replicate2/CHARMM22star_TIP3P/md/md.tpr, VERSION 4.6.5 (single precision)
+Group     0 (        Protein) has  2801 elements
+There is one group in the index
+Reading frame       0 time    0.000   
+Precision of ../../../../../../../../simulations/beclin1/2PON_1-156_21-43/replicate2/CHARMM22star_TIP3P/md/Mol_An/traj_centered.xtc is 0.0002 (nm)
+ ->  frame      0 time    0.000      Last frame          0 time    0.000   
+
+
+GROMACS reminds you: "You're Insignificant" (Tricky)
+
+Note that major changes are planned in future for trjconv, to improve usability and utility.
+Select group for output

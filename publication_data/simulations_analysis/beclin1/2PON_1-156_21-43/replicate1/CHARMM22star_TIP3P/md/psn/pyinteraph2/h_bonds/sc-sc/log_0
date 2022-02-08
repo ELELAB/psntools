@@ -1,0 +1,24 @@
+nohup: ignoring input
+/usr/local/envs/py37/lib/python3.7/site-packages/MDAnalysis-1.1.1-py3.7-linux-x86_64.egg/MDAnalysis/coordinates/XDR.py:233: UserWarning: Couldn't save offsets because: [Errno 13] Permission denied: '../../../../../../../../../../simulations/beclin1/2PON_1-156_21-43/replicate1/CHARMM22star_TIP3P/md/Mol_An/.traj_centered.xtc_offsets.npz'
+  warnings.warn("Couldn't save offsets because: {}".format(e))
+/usr/local/envs/py37/lib/python3.7/site-packages/MDAnalysis-1.1.1-py3.7-linux-x86_64.egg/MDAnalysis/analysis/hbonds/hbond_analysis.py:346: DeprecationWarning: This module is deprecated as of MDAnalysis version 1.0.It will be removed in MDAnalysis version 2.0Please use MDAnalysis.analysis.hydrogenbonds.hbond_analysis instead.
+  category=DeprecationWarning
+/usr/local/envs/py37/lib/python3.7/site-packages/MDAnalysis-1.1.1-py3.7-linux-x86_64.egg/MDAnalysis/analysis/hbonds/wbridge_analysis.py:33: DeprecationWarning: This module has been moved to MDAnalysis.analysis.hydrogenbonds.wbridge_analysis It will be removed in release 2.0
+  category=DeprecationWarning)
+/usr/local/envs/py37/lib/python3.7/site-packages/MDAnalysis-1.1.1-py3.7-linux-x86_64.egg/MDAnalysis/analysis/hbonds/hbond_analysis.py:580: DeprecationWarning: This class is deprecated as of MDAnalysis version 1.0 and will be removed in version 2.0.Please use MDAnalysis.analysis.hydrogenbonds.hbond_analysis.HydrogenBondAnalysis instead.
+  category=DeprecationWarning
+INFO: HBond analysis: selection1 = 'protein and (not backbone or name H or name H1 or name H2 or name H3 or name O1 or name O2 or name OXT)' (update: True)
+INFO: HBond analysis: selection2 = 'protein and (not backbone or name H or name H1 or name H2 or name H3 or name O1 or name O2 or name OXT)' (update: True)
+INFO: HBond analysis: criterion: donor hydrogen atom and acceptor atom distance <= 3.500 A
+INFO: HBond analysis: criterion: angle D-H-A >= 120.000 degrees
+INFO: HBond analysis: force field customFF to guess donor and acceptor names
+INFO: HBond analysis: bonded hydrogen detection algorithm: 'distance'
+INFO: HBond analysis: initial checks passed.
+INFO: Will use acceptors: OH, OG, OD1, OD2, OG1, O, ND1, NE2, OE2, OW, SG, OE1, OH2, SD
+INFO: Will use donors: OH, OG, NE2, OG1, NE, N, ND1, NZ, NH1, NH2, OW, ND2, SG, OH2, NE1
+INFO: Running hydrogen bonds analysis...
+INFO: HBond analysis: starting
+INFO: Starting analysis (frame index start=0 stop=100001, step=1)
+INFO: HBond analysis: complete; timeseries  Custom_HydrogenBondAnalysis.timeseries
+INFO: Done! Finalizing...
+0-hb.sh: 19: 0-hb.sh: /home/valentina: Permission denied
