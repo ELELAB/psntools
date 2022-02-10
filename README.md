@@ -1,3 +1,8 @@
+Cancer Structural Biology, Danish Cancer Society Research Center, 2100, Copenhagen, Denmark
+
+Cancer Systems Biology, Health and Technology Department, Section for Bioinformatics, 2800, Lyngby, Denmark
+
+
 # `psntools`
 
 ## Overview
@@ -23,8 +28,12 @@ The package contains several modules to perform various tasks related to PSN ana
 The unit tests for `psntools` are currently being written.
 
 ## Reference
-Bcl-xL dynamics under the lens of protein structure networks. Valentina Sora, Dionisio Sanchez, Elena Papaleo*,J Phys Chem B, 2021, 125, 17, 4308–4320
-Publication Date:April 13, 2021
+early version of the tool: Bcl-xL dynamics under the lens of protein structure networks. Valentina Sora, Dionisio Sanchez, Elena Papaleo*,J Phys Chem B, 2021, 125, 17, 4308–4320 Publication Date:April 13, 2021
 https://doi.org/10.1021/acs.jpcb.0c11562 
-an early pre-print version in biorxiv: doi: https://doi.org/10.1101/574699
+
+
+current full version:
+psntools - a Python package for protein structure network analysis
+Valentina Sora, Matteo Tiberti, Elena Papaleo
+biorxiv, doi: https://doi.org/10.1101/2022.02.07.479254
 
